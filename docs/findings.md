@@ -150,3 +150,60 @@ Sources:
 
 - [Pinned recovery instruction](https://github.com/openclaw/openclaw/blob/v2026.10.3/src/agents/embedded-agent-runner/run/incomplete-turn-recovery.ts)
 - [Direct tool schemas](https://docs.openclaw.ai/tools/tool-search)
+
+## F04 The backend accepts one active application run
+
+Finding date: 2026-10-14.
+This is an application design limit. It is not an OpenClaw protocol limit.
+
+### Current behavior
+
+The backend reserves one run slot across all application conversations.
+While that run is active, another message submission returns 409 with RUN_BUSY.
+The backend does not queue or steer the new message.
+The same limit applies when the user switches to another conversation.
+Live checks verified rejection of duplicate and concurrent sends.
+
+The HTTP stream and the gateway run have separate lifetimes.
+Closing the browser stream removes its response writer. It does not cancel the run.
+The backend continues to observe the run and exposes known state through history.
+This separation does not require a single-run limit. Queueing can use the same separation later.
+
+An unknown outcome is different from a known active run.
+For example, the gateway may accept a message before the connection loses its acknowledgement.
+The backend must resolve that state before it admits more work.
+A closed stream or elapsed transport timeout does not prove that the run stopped.
+This prevents accidental repeat model calls and ambiguous conversation state.
+
+### Future improvement: queued and steering input
+
+Prefer the gateway's existing input modes before adding a separate queue service.
+The pinned 2026.10.3 chat.send schema accepts queueMode values including followup and steer.
+
+| Mode | Intended user behavior |
+| --- | --- |
+| Queue with followup | Accept another message now. Process it as a later turn after the current run ends. |
+| Steer with steer | Add instructions to the active run when its runtime accepts steering. Otherwise, the input can wait for a later turn. |
+
+Steering does not guarantee an immediate change and does not undo work already performed.
+It is not the same as cancelling the current run and starting another one.
+These modes have not been tested with this project's selected model and provider route.
+
+Start with explicit followup input, then add steering as a separate user choice.
+Show queued, running, consumed, cancelled, and uncertain input states.
+Keep each submitted input ID separate from the execution run that eventually consumes it.
+Bound pending input and provide cancellation for a specific queued input.
+Restore pending inputs and receipts after reconnect or restart; activeRun alone is not sufficient.
+Keep idempotency and ownership checks for every input.
+Do not retry an input whose acceptance is unknown or place it into another queue automatically.
+
+Review the global run slot when adding this behavior.
+Use conversation and instance boundaries for admission, with a separate resource limit.
+Preserve the current 2 GB WSL budget.
+Implement and verify these changes in a later scope. The current backend behavior remains unchanged.
+
+Sources:
+
+- [Current backend contract](backend-prd.md#failure-and-recovery-rules)
+- [Pinned chat input schema](https://github.com/openclaw/openclaw/blob/v2026.10.3/packages/gateway-protocol/src/schema/logs-chat.ts#L258-L328)
+- [Gateway queue and steering behavior](https://docs.openclaw.ai/concepts/queue)

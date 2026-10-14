@@ -1,0 +1,16 @@
+# Opt in only when your network requires a custom public CA certificate bundle.
+services:
+  api:
+    build:
+      secrets: [custom_ca]
+    environment:
+      NODE_EXTRA_CA_CERTS: /run/secrets/custom_ca
+    secrets: [custom_ca]
+  openclaw-gateway:
+    environment:
+      NODE_EXTRA_CA_CERTS: /run/secrets/custom_ca
+    secrets: [custom_ca]
+
+secrets:
+  custom_ca:
+    file: ${CUSTOM_CA_FILE:?Set CUSTOM_CA_FILE to your public CA certificate bundle}

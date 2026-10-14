@@ -1,5 +1,17 @@
 **
 !docker/
+docker/**
 !docker/Dockerfile
 !docker/openclaw.json
 !docker/gateway-entrypoint.sh
+!docker/api.Dockerfile
+!package.json
+!package-lock.json
+!apps/
+apps/**
+!apps/api/
+apps/api/**
+!apps/api/package.json
+!apps/api/tsconfig.json
+!apps/api/src/
+!apps/api/src/**

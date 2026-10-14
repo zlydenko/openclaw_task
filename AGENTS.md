@@ -5,9 +5,12 @@
 R1 sets up the OpenClaw agent in Docker.
 Use one gateway service and the official OpenClaw terminal client.
 Keep this stage small and readable.
-R2 currently covers the Hono backend requirements and design only.
+The Hono backend is implemented in apps/api.
 Read docs/backend-prd.md before backend work.
-Do not implement the backend until the user requests implementation.
+The user authorized backend implementation based on the PRD.
+Use npm run check and npm run build for backend changes.
+Use the manual backend checks in docs/verification.md.
+Live model checks require opt-in and a small paid request budget.
 React remains deferred.
 
 The user requested removal of the custom gateway probe and integration harness.

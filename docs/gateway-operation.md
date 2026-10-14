@@ -56,8 +56,11 @@ Keep `openrouter_key` local and ignored by Git.
 Supply it privately to reviewers or let them use their own key.
 Compose supplies the provider key and gateway token as secret files.
 
-Run `node scripts/setup.mjs` again after an approved change to the host certificate store.
+Run `node scripts/setup.mjs` to prepare credentials.
 The script preserves an existing gateway token.
+Node uses its built-in CA certificates by default.
+For a network that requires custom trust, use the [optional CA override](../README.md#optional-custom-ca-certificates).
+After replacing a custom bundle, rebuild the API without cache and recreate the containers with that override.
 Do not disable TLS certificate validation to fix a certificate error.
 
 Keep the user-requested 2 GB WSL memory cap.

@@ -3,6 +3,17 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Hono backend — 2026-10-14
+
+- Add conversation, history, SSE, cancellation, and health routes.
+- Use the official 2026.10.3 gateway client with a private device identity.
+- Track one active run and block duplicate or uncertain submissions.
+- Add a backend container with a loopback HTTP port and a 256 MiB memory limit.
+- Document first-time pairing and manual backend checks.
+- Record the single-run limit and future queued or steering input in findings.
+- Use built-in CA certificates by default. Make custom CA support an explicit Compose override.
+- Keep React deferred.
+
 ## R2 design — 2026-10-14
 
 - Define the proposed Hono API, streaming, recovery, limits, and acceptance criteria.

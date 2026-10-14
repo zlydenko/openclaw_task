@@ -1,7 +1,7 @@
 # Hono backend PRD (Product Requirements Document)
 
-Draft for R2. 
-This stage defines the backend. Implementation requires a separate request.
+Defined in R2. Backend implementation is now authorized.
+React remains deferred.
 
 ## Goal and scope
 

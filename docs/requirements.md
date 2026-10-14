@@ -65,12 +65,13 @@ Do not assume a literal `tool_call` event exists at every protocol layer.
 R1 runs one Docker gateway and the built-in OpenClaw terminal client.
 The custom probe and integration harness have been removed at the user's request.
 Keep one commit named `R1: setup openclaw agent in docker` for this stage.
-Hono routes, React components, and a separate backend container remain deferred.
+Hono routes and a backend container are now implemented.
+React components remain deferred.
 R1 alone does not complete the full assessment.
 
-The current request starts R2 with the [Hono backend PRD](backend-prd.md).
-This request authorizes design documentation only.
-Backend implementation follows a separate user request.
+The [Hono backend PRD](backend-prd.md) defines the backend contract.
+The user authorized backend implementation in a later request.
+The backend uses the official 2026.10.3 client and protocol packages.
 
 Use a local single-user scope for the assessment.
 The assessment does not explicitly require single-user or multi-user support.

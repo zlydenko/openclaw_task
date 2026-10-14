@@ -1,6 +1,47 @@
 name: openclaw-assessment
 
 services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    init: true
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      openclaw-gateway:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3000"
+      APP_ORIGIN: http://localhost:3000
+      GATEWAY_URL: ws://openclaw-gateway:18789
+      API_STATE_DIR: /home/node/.assessment
+      GATEWAY_TOKEN_FILE: /run/secrets/gateway_token
+      # Plain WS stays inside this local Compose network. The gateway has no host port.
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: "1"
+      NODE_OPTIONS: --max-old-space-size=160
+    secrets: [gateway_token]
+    volumes:
+      - api_state:/home/node/.assessment
+    tmpfs:
+      - /tmp:uid=1000,gid=1000,mode=1777
+    ports: ["127.0.0.1:3000:3000"]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    mem_limit: 256m
+    pids_limit: 64
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "2" }
+
   openclaw-gateway:
     build:
       context: .
@@ -13,11 +54,7 @@ services:
     environment:
       OPENCLAW_STATE_DIR: /home/node/.openclaw
       NODE_OPTIONS: --max-old-space-size=768
-      NODE_EXTRA_CA_CERTS: /etc/assessment/host-ca.pem
       OPENCLAW_DISABLE_BONJOUR: "1"
-    configs:
-      - source: host_ca
-        target: /etc/assessment/host-ca.pem
     secrets: [openrouter_api_key, gateway_token]
     volumes:
       - gateway_state:/home/node/.openclaw
@@ -50,9 +87,6 @@ secrets:
   gateway_token:
     file: ./.local/gateway_token
 
-configs:
-  host_ca:
-    file: ./.local/host-ca.pem
-
 volumes:
   gateway_state: {}
+  api_state: {}

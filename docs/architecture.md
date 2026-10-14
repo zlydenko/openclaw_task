@@ -1,11 +1,11 @@
 # Architecture decisions
 
-## Current R1
+## Current services
 
-One Docker service runs the OpenClaw gateway.
+One Docker service runs the OpenClaw gateway. A second service runs Hono.
 The official terminal client runs inside the gateway container.
 The gateway calls OpenRouter through HTTPS with `moonshotai/kimi-k2-thinking`.
-Hono, React, a separate client container, and application packages remain deferred.
+React remains deferred. The backend source is in apps/api/src.
 
 Compose supplies file secrets and a persistent `gateway_state` volume.
 The gateway port is not published on the host.
@@ -18,9 +18,9 @@ Tool-call compatibility remains unresolved.
 Read [findings](findings.md) for the evidence and limits.
 The full tool profile and direct definitions do not override existing service permissions.
 
-## Planned application
+## Application
 
-The [Hono backend PRD](backend-prd.md) defines the proposed R2 HTTP contract and failure behavior.
+The [Hono backend PRD](backend-prd.md) defines the HTTP contract and failure behavior.
 
 ```text
 React browser
@@ -55,23 +55,32 @@ Keep session and run identifiers on applicable events.
 ## Gateway client and transport
 
 Use the official OpenClaw client behind a small adapter.
-Read the pinned package interfaces before backend implementation.
-Verify compatibility with the pinned gateway.
-R1 does not include a separate client package.
+The client and protocol packages are pinned to 2026.10.3, matching the gateway.
+The backend requests only operator.read and operator.write.
+It advertises session-scoped events and chat-only assistant text.
+It does not advertise approval or tool-display capabilities.
 
 Use HTTP requests for message submission and SSE for response events.
 Keep the gateway WebSocket connection inside the backend.
 Subscribe before a run can emit events.
 Correlate events with both the session and run.
 Do not resend an accepted message because a browser stream closes.
-Use explicit gateway cancellation when cancellation is implemented.
+Cancellation targets the exact session and run through chat.abort.
+One active application run is permitted. Extra sends return 409.
+Lost browser streams do not own the run lifetime.
+The backend checks gateway history after reconnect and never resends an unknown submission.
 
 ## State
 
 Use OpenClaw conversation history for the single-user application.
 Do not add an application database for this scope.
 Persist gateway configuration and conversations in the gateway volume.
-When a separate backend client is added, store its device identity and token privately.
+The backend stores its device identity and token in the private api_state volume.
+Only the backend HTTP port is published, on host loopback.
+The backend has a 256 MiB container limit. The gateway retains its 1280 MiB limit.
+The global WSL memory cap remains 2 GB.
+Empty conversations and request deduplication records are in memory.
+They are not a durable application database.
 A new conversation must not erase older conversations.
 
 ## Future accounts and separate gateways
