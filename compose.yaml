@@ -1,0 +1,58 @@
+name: openclaw-assessment
+
+services:
+  openclaw-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    init: true
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      OPENCLAW_STATE_DIR: /home/node/.openclaw
+      NODE_OPTIONS: --max-old-space-size=768
+      NODE_EXTRA_CA_CERTS: /etc/assessment/host-ca.pem
+      OPENCLAW_DISABLE_BONJOUR: "1"
+    configs:
+      - source: host_ca
+        target: /etc/assessment/host-ca.pem
+    secrets: [openrouter_api_key, gateway_token]
+    volumes:
+      - gateway_state:/home/node/.openclaw
+    tmpfs:
+      - /tmp:uid=1000,gid=1000,mode=1777
+      - /home/node/.cache:uid=1000,gid=1000,mode=0700
+      - /run/openclaw-secrets:uid=1000,gid=1000,mode=0700
+    command: [gateway, --bind, lan, --port, "18789"]
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:18789/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    mem_limit: 1280m
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "2" }
+
+secrets:
+  openrouter_api_key:
+    file: ./openrouter_key
+  gateway_token:
+    file: ./.local/gateway_token
+
+configs:
+  host_ca:
+    file: ./.local/host-ca.pem
+
+volumes:
+  gateway_state: {}

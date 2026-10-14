@@ -1,0 +1,105 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": 18789,
+    "controlUi": {
+      "enabled": false
+    },
+    "auth": {
+      "mode": "token",
+      "token": {
+        "source": "file",
+        "provider": "gatewayfile",
+        "id": "value"
+      },
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000
+      }
+    }
+  },
+  "secrets": {
+    "providers": {
+      "gatewayfile": {
+        "source": "file",
+        "path": "/run/openclaw-secrets/gateway_token",
+        "mode": "singleValue"
+      },
+      "openrouterfile": {
+        "source": "file",
+        "path": "/run/openclaw-secrets/openrouter_api_key",
+        "mode": "singleValue"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "api": "openai-responses",
+        "apiKey": {
+          "source": "file",
+          "provider": "openrouterfile",
+          "id": "value"
+        },
+        "models": [
+          {
+            "id": "moonshotai/kimi-k2-thinking",
+            "name": "Kimi K2 Thinking",
+            "reasoning": true,
+            "input": ["text"],
+            "contextWindow": 262144,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "ownership": "explicit",
+    "defaults": {
+      "model": {
+        "primary": "openrouter/moonshotai/kimi-k2-thinking"
+      },
+      "heartbeat": {
+        "every": "0m"
+      },
+      "timeoutSeconds": 180
+    },
+    "entries": {
+      "main": {
+        "workspace": "/home/node/.openclaw/workspace"
+      }
+    }
+  },
+  "tools": {
+    "profile": "full",
+    "toolSearch": false,
+    "codeMode": false,
+    "elevated": {
+      "enabled": false
+    }
+  },
+  "memory": {
+    "search": {
+      "enabled": false,
+      "rememberAcrossConversations": false
+    }
+  },
+  "browser": {
+    "enabled": false
+  },
+  "plugins": {
+    "allow": ["openrouter"],
+    "entries": {
+      "memory-core": {
+        "enabled": false
+      }
+    }
+  },
+  "cron": {
+    "enabled": false
+  }
+}
