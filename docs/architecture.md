@@ -20,6 +20,8 @@ The full tool profile and direct definitions do not override existing service pe
 
 ## Planned application
 
+The [Hono backend PRD](backend-prd.md) defines the proposed R2 HTTP contract and failure behavior.
+
 ```text
 React browser
     | HTTP requests and SSE events

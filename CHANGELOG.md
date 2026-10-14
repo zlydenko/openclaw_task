@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## R2 design — 2026-10-14
+
+- Define the proposed Hono API, streaming, recovery, limits, and acceptance criteria.
+- Keep backend and frontend implementation deferred.
+
 ## R1 — 2026-10-14
 
 - Set up one digest-pinned OpenClaw gateway in Docker.

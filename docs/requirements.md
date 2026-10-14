@@ -68,6 +68,10 @@ Keep one commit named `R1: setup openclaw agent in docker` for this stage.
 Hono routes, React components, and a separate backend container remain deferred.
 R1 alone does not complete the full assessment.
 
+The current request starts R2 with the [Hono backend PRD](backend-prd.md).
+This request authorizes design documentation only.
+Backend implementation follows a separate user request.
+
 Use a local single-user scope for the assessment.
 The assessment does not explicitly require single-user or multi-user support.
 Do not add login, account management, or an application database in the initial version.
