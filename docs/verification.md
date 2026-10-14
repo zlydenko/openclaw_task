@@ -78,6 +78,13 @@ Do not clear state to force a retry. Inspect gateway state first.
 - After restoring the explicit CA override, public npm and OpenRouter HTTPS checks returned 200. Gateway configuration validation and backend readiness passed. Local services remain on that override because this network requires it.
 - No paid model calls were made for these checks.
 
+## Backend cleanup verification — 2026-10-15
+
+- TypeScript build, Oxlint, and Oxfmt passed after the module split.
+- The same one-off HTTP/chat exercise passed before and after refactoring. It checked validation, visible snapshots, event isolation and ordering, duplicate and busy requests, browser loss, exact cancellation, reconnect recovery, lost acknowledgements, and events received before acknowledgement. Its gateway was an in-memory substitute. No test harness was added to the repository.
+- The rebuilt API container reused its saved device identity and token. Authenticated readiness, both existing histories, conversation pagination, and invalid-request rejection passed against the real gateway.
+- No paid model calls were made for this refactor. Earlier provider results remain historical evidence.
+
 ## Full application acceptance
 
 React remains deferred.

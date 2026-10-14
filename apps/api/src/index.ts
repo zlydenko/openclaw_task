@@ -1,5 +1,6 @@
 import type { Server } from "node:http";
 import { serve } from "@hono/node-server";
+
 import { createApp } from "./app.ts";
 import { Chat } from "./chat.ts";
 import { OpenClaw } from "./openclaw.ts";
@@ -10,6 +11,7 @@ const gateway = new OpenClaw(
 );
 const chat = new Chat(gateway);
 const app = createApp(chat, process.env.APP_ORIGIN, process.env.DEV_ORIGIN);
+
 const server = serve(
   {
     fetch: app.fetch,
@@ -22,22 +24,30 @@ const server = serve(
     );
   },
 ) as Server;
+
 // Body/header deadlines also protect clients that never finish a request.
 server.requestTimeout = 15_000;
 server.headersTimeout = 10_000;
+
 gateway.start();
+
 let stopping = false;
+
 async function shutdown() {
   if (stopping) return;
+
   stopping = true;
+
   chat.close();
   server.close();
   await gateway.stop();
   server.closeAllConnections();
 }
+
 process.once("SIGTERM", () => {
   void shutdown();
 });
+
 process.once("SIGINT", () => {
   void shutdown();
 });

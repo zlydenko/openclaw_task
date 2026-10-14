@@ -43,10 +43,17 @@ Choose frontend serving and routing when the application is implemented.
 | Component | Responsibility |
 | --- | --- |
 | React | Input, messages, partial answers, connection state, and useful errors |
-| Hono routes | Validate requests and provide the HTTP interface |
-| Chat service | Coordinate conversations, active runs, and event delivery |
+| Hono routes and controllers | Register endpoints and return JSON or SSE |
+| HTTP middleware | Validate origins, parameters, bodies, and pagination |
+| Chat service | Coordinate conversation access and message admission |
+| Chat components | Own conversations, run state, event delivery, and recovery |
 | Gateway adapter | Use the official client and translate supported gateway events |
 | OpenClaw | Run the agent, retain conversation state, and call the provider |
+
+Backend type declarations live in `apps/api/src/types.ts`.
+Controllers consume validated Hono context values.
+Run admission remains synchronous inside the chat service.
+Gateway device storage and message projection have separate modules.
 
 Keep credentials in the backend and gateway.
 Expose only the application commands that the browser needs.

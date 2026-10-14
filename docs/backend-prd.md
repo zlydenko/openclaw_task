@@ -164,13 +164,25 @@ Keep these responsibilities in `apps/api/src`:
 
 | File | Responsibility |
 | --- | --- |
-| index.ts | Start the server and handle shutdown |
-| app.ts | Build the Hono app and register middleware and routes |
-| routes.ts | Validate HTTP input and write JSON or SSE |
-| chat.ts | Coordinate requests, active work, and conversation access |
-| openclaw.ts | Own the official client, device storage, and event translation |
+| index.ts and app.ts | Server lifecycle and application wiring |
+| routes.ts | Register paths, middleware, and controller handlers |
+| controller.ts | Read validated input and select JSON or SSE responses |
+| middleware.ts | Host, Origin, body, message, parameter, and page validation |
+| stream.ts | Bound SSE writes and manage the HTTP writer lifetime |
+| chat.ts | Coordinate gateway access, submissions, and recovery |
+| chat/conversations.ts | Empty conversations, list pages, and history projection |
+| chat/runs.ts | Idempotency, run state, event ordering, and output limits |
+| chat/recovery.ts | Restore subscriptions and reconcile authoritative gateway state |
+| openclaw.ts | Own the official connection and translate RPC calls |
+| gateway/device.ts | Private identity, signatures, and scoped-token storage |
+| gateway/messages.ts | Session keys, gateway payload checks, and visible messages |
+| types.ts | Backend type declarations and HTTP context contracts |
+| errors.ts, pagination.ts, and validation.ts | Shared error responses, cursors, and input primitives |
 
-Keep types beside their consumers. Add shared contracts only when React needs them.
+Keep backend type declarations in types.ts. Add shared contracts only when React needs them.
+Put a blank line between library imports and local imports.
+Separate logical code chunks and methods with a blank line.
+Keep resource and run-state checks in their services. HTTP middleware must not own the run lock.
 Avoid generic repositories, plugin systems, and dependency-injection frameworks.
 
 Use npm workspaces, a committed lockfile, and Hono's Node adapter and streaming helper.

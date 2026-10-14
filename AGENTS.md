@@ -32,6 +32,17 @@ Use actual commit dates.
 - For runtime changes, validate Compose, startup configuration, and basic gateway health.
 - Do not push or publish without user authorization.
 
+## Backend organization and style
+
+Keep backend type declarations in apps/api/src/types.ts.
+Keep routes.ts for route registration and controller.ts for response handling.
+Use middleware.ts for reusable HTTP request checks.
+Keep run-state checks in chat components because they must protect submission atomically.
+Use chat/ for conversations, run tracking, and recovery.
+Use gateway/ for device storage and message projection.
+Put a blank line between library imports and local imports.
+Put a blank line between logical code chunks and methods.
+
 ## Agreed technologies for later stages
 
 Use TypeScript, Hono on Node.js, and React with Vite and plain CSS.

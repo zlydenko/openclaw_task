@@ -3,6 +3,14 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Backend cleanup — 2026-10-14
+
+- Extract type contracts, controllers, reusable request middleware, and SSE handling.
+- Split chat coordination into conversation, run-tracking, and recovery modules.
+- Extract gateway device storage and visible-message projection.
+- Separate library imports, local imports, methods, and logical code chunks with blank lines.
+- Retain the current single-run policy and existing gateway permissions.
+
 ## Hono backend — 2026-10-14
 
 - Add conversation, history, SSE, cancellation, and health routes.

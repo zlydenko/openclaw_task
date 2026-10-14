@@ -167,7 +167,7 @@ Do this only in the terminal where you need the extra trust.
 | `compose.yaml`                 | Gateway and backend services, secrets, limits, and private state |
 | `docker/Dockerfile`            | Pinned official gateway image and startup script |
 | `docker/api.Dockerfile` | Pinned Node image and the backend build |
-| `apps/api/src` | Hono routes, chat coordination, and the official gateway adapter |
+| `apps/api/src` | Controllers, middleware, chat components, types, and the gateway adapter |
 | `docker/openclaw.json`         | Provider, model, authentication, and agent settings                  |
 | `docker/gateway-entrypoint.sh` | Prepare private secrets and seed initial configuration               |
 | `scripts/setup.mjs`            | Prepare local credentials |
