@@ -3,6 +3,14 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Reliable conversation title fallback — 2026-10-15
+
+- Show short user-text titles for existing unnamed conversations.
+- Use the same fallback when native naming returns a random crustacean name.
+- Keep custom names and useful generated titles first.
+- Bound and cache history reads. Do not make paid backfill requests or replay messages.
+- Verify names for all 12 saved conversations before and after an API restart.
+
 ## Message queue design notes — 2026-10-15
 
 - Shorten the parallel conversation report. Compare an in-process queue, Redis Streams, and more execution capacity.

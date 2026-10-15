@@ -134,16 +134,19 @@ Do not expose this trusted single-user service publicly.
 
 ## Conversation names
 
-New conversations receive a short name from their first submitted message.
-OpenClaw generates and stores the name in the background.
-The sidebar updates through read-only refreshes. Empty conversations keep the New conversation label.
-Custom names take precedence. Saved names remain after a restart.
+Conversations show a short title from their saved first user message when a useful name is unavailable.
+This covers old conversations and failed native naming requests.
+Empty conversations keep the New conversation label until they contain a message.
 
-The gateway uses its utility-model route when available, or the configured chat model.
-Naming uses separate paid provider requests. It sends at most 1,000 characters to generate a title of at most 60 characters.
-Generation failures use OpenClaw's native fallback behavior and do not require another message submission.
-Existing conversations keep their history and session keys. They are not renamed in bulk.
-See [the naming finding](docs/findings.md#f07-official-automatic-conversation-titles-require-an-interactive-session-key) for the protocol details and test limits.
+OpenClaw still generates names for new conversations in the background.
+Custom names and useful generated names take precedence over the text excerpt.
+If OpenClaw returns a random crustacean name, the interface uses the text excerpt instead.
+The sidebar updates through read-only refreshes.
+Names stay stable after restart because the gateway retains the source messages.
+
+Native naming can make separate paid provider requests through the utility or configured chat model.
+The fallback reads saved history. It makes no model request and does not change messages or saved names.
+See [the naming failure finding](docs/findings.md#f08-native-naming-failed-and-legacy-sessions-had-no-derived-title) for observed results and limits.
 
 ## Parallel conversations
 

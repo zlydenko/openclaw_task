@@ -104,6 +104,9 @@ New application keys use agent:main:dashboard:assessment-api-<uuid> for native f
 The gateway stores generated names in displayName. Custom labels take precedence.
 The adapter retains legacy assessment-api keys discovered through the roster.
 The browser refreshes title metadata through read-only list requests.
+Missing names and native random fallback names use a short excerpt from the oldest user text.
+The backend reads bounded history pages and caches up to 512 fallback titles.
+Fallbacks need no model request or persistent metadata update. Saved messages provide their source after restart.
 The backend stores its device identity and token in the private api_state volume.
 Only the backend HTTP port is published, on host loopback.
 The backend has a 256 MiB container limit. The gateway retains its 1280 MiB limit.

@@ -164,3 +164,14 @@ For a future approved live check, start one new conversation with a short topic.
 Wait for the title to replace the fallback without a second message POST.
 Refresh the browser and restart only the API. Confirm the same title and history.
 Count separate title-generation attempts in the paid budget, including the gateway's native fallback attempts.
+
+
+## Conversation title fallback correction — 2026-10-16
+
+- The new dashboard session had a native random fallback name. Eleven saved legacy sessions had no title metadata. This was checked with official read-only RPCs and without printing transcript text.
+- Added a short user-text fallback for both cases. Custom labels and useful generated names retain priority.
+- TypeScript, Oxlint, Oxfmt, all 21 integration checks, and the production build passed. The extended HTTP/SDK fixture checks missing metadata, oldest history paging, cache reuse, native fallback replacement, and later generated names.
+- Compose validation, gateway configuration validation, and service health passed after rebuilding the API.
+- The running API returned nonempty titles for all 12 saved conversations. Repeated list reads returned the same result. An API restart preserved all 12 titles and restored authenticated readiness.
+- No valid chat submission, title-generation request, paid backfill, or message replay was used for these checks.
+- These fallback titles are deterministic user-text excerpts. Successful native AI title generation remains unverified; the observed native request exhausted its attempts.

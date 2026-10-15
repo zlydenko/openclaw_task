@@ -1,14 +1,16 @@
 import { randomUUID } from "node:crypto";
 
 import { ApiError } from "../errors.ts";
-import { conversationId, projectMessages } from "../gateway/messages.ts";
+import { conversationId, projectMessages, visibleMessage } from "../gateway/messages.ts";
+import { isFallbackName, titleFromUserText } from "../gateway/titles.ts";
 import type { OpenClaw } from "../openclaw.ts";
 import { cursorFor } from "../pagination.ts";
-import { text, uuid } from "../validation.ts";
+import { record, text, uuid } from "../validation.ts";
 import type { ConversationItem, Page, Run } from "../types.ts";
 
 export class Conversations {
   private empty = new Map<string, number>();
+  private fallbackTitles = new Map<string, Promise<string>>();
 
   constructor(private gateway: OpenClaw) {}
 
@@ -48,7 +50,12 @@ export class Conversations {
         const id = conversationId(row.key);
 
         if (!id || !uuid.test(id) || this.empty.has(id)) continue;
-        const title = text(row.label) || text(row.displayName) || text(row.derivedTitle);
+        const label = text(row.label);
+        const saved = label || text(row.displayName) || text(row.derivedTitle);
+        const title =
+          label || (saved && !isFallbackName(saved))
+            ? saved
+            : (await this.fallbackTitle(id)) || saved;
 
         items.push({
           id,
@@ -69,6 +76,33 @@ export class Conversations {
         return { items, nextCursor: cursorFor("list", offset, emptyOffset) };
     }
     return { items, nextCursor: cursorFor("list", offset, emptyOffset) };
+  }
+
+  private fallbackTitle(id: string) {
+    const cached = this.fallbackTitles.get(id);
+    if (cached) return cached;
+
+    const pending = this.readFallbackTitle(id).catch(() => "");
+    this.fallbackTitles.set(id, pending);
+    if (this.fallbackTitles.size > 512)
+      this.fallbackTitles.delete(this.fallbackTitles.keys().next().value!);
+
+    void pending.then((title) => {
+      if (!title && this.fallbackTitles.get(id) === pending) this.fallbackTitles.delete(id);
+    });
+
+    return pending;
+  }
+
+  private async readFallbackTitle(id: string) {
+    let history = await this.gateway.history(id, 20, 0);
+
+    if (typeof history.totalMessages === "number" && history.totalMessages > 20)
+      history = await this.gateway.history(id, 20, history.totalMessages - 20);
+
+    const user = history.messages?.map(record).find((message) => message.role === "user");
+
+    return user ? titleFromUserText(visibleMessage(user).text) : "";
   }
 
   async known(id: string, active: Run | null = null) {

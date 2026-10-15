@@ -18,6 +18,8 @@ it("uses native naming keys and preserves legacy history, sends, subscriptions, 
 
   const oldId = "11111111-1111-4111-8111-111111111111";
   const oldKey = legacyNamespace + oldId;
+  const unnamedId = "22222222-2222-4222-8222-222222222222";
+  const failedId = "33333333-3333-4333-8333-333333333333";
   const rows: SessionRow[] = [
     {
       key: oldKey,
@@ -25,6 +27,8 @@ it("uses native naming keys and preserves legacy history, sends, subscriptions, 
       displayName: "Automatic name",
       derivedTitle: "Preview",
     },
+    { key: legacyNamespace + unnamedId },
+    { key: sessionKey(failedId), displayName: "oceanic-crab", derivedTitle: "oceanic-crab" },
   ];
   const request = vi
     .spyOn(GatewayClient.prototype, "request")
@@ -32,8 +36,33 @@ it("uses native naming keys and preserves legacy history, sends, subscriptions, 
       const input = params as Record<string, unknown>;
       if (method === "sessions.list")
         return { sessions: rows.filter((row) => row.key.includes(String(input.search))) } as never;
-      if (method === "chat.history")
+      if (method === "chat.history") {
+        if (input.sessionKey === legacyNamespace + unnamedId)
+          return {
+            totalMessages: 75,
+            messages:
+              input.offset === 55
+                ? [
+                    {
+                      role: "user",
+                      content: [
+                        { type: "thinking", text: "Hidden content" },
+                        {
+                          type: "text",
+                          text: "Restore saved conversation titles. Keep history intact.",
+                        },
+                      ],
+                    },
+                  ]
+                : [{ role: "assistant", content: "A later answer must not become the title." }],
+          } as never;
+        if (input.sessionKey === sessionKey(failedId))
+          return {
+            totalMessages: 1,
+            messages: [{ role: "user", content: "Plan a garden with native plants." }],
+          } as never;
         return { messages: [], sessionInfo: { activeRunIds: [] } } as never;
+      }
       if (method === "chat.send") {
         options?.onSent?.("fixture-request");
         if (!rows.some((row) => row.key === input.sessionKey))
@@ -94,7 +123,21 @@ it("uses native naming keys and preserves legacy history, sends, subscriptions, 
       expect.arrayContaining([
         { id, title: "Plan a garden" },
         { id: oldId, title: "Saved custom name" },
+        { id: unnamedId, title: "Restore saved conversation titles." },
+        { id: failedId, title: "Plan a garden with native plants." },
       ]),
+    );
+    expect(
+      request.mock.calls.filter(
+        ([method, input]) =>
+          method === "chat.history" &&
+          (input as Record<string, unknown>).sessionKey === legacyNamespace + unnamedId,
+      ),
+    ).toHaveLength(2);
+    rows.find((row) => row.key === sessionKey(failedId))!.displayName = "Native garden design";
+    const renamed = await (await get("/api/conversations")).json();
+    expect(renamed.items.find((item: { id: string }) => item.id === failedId).title).toBe(
+      "Native garden design",
     );
     // Roster reads do not request another chat turn or a separate title RPC.
     expect(request.mock.calls.filter(([method]) => method === "chat.send")).toHaveLength(2);

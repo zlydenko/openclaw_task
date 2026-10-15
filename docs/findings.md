@@ -403,3 +403,63 @@ A live check of generated wording and timing remains unverified.
 - [Official session names](https://docs.openclaw.ai/web/control-ui/sessions-and-sidebar#new-session-names)
 - [Official utility model configuration](https://docs.openclaw.ai/gateway/config-agents/models)
 - [Official session RPCs](https://docs.openclaw.ai/gateway/protocol/rpc-session-control)
+
+
+## F08 Native naming failed and legacy sessions had no derived title
+
+Finding date: 2026-10-15.
+Verified release: OpenClaw 2026.10.3. Wire protocol: 4.
+
+### Observed result
+
+The user still saw unnamed conversations after F07.
+Read-only gateway inspection found 12 saved application sessions.
+The new dashboard session had displayName and derivedTitle set to oceanic-crab.
+The gateway logged: dashboard session title generation exhausted; using a crustacean fallback name.
+The other 11 legacy sessions had no label, displayName, or derivedTitle.
+Requesting includeLastMessage returned previews but did not restore their derived titles.
+The new session's random name was present in the HTTP API when inspected.
+The gateway log did not identify the underlying provider failure.
+
+F07 established eligibility and metadata projection. It did not prove useful generated titles.
+The old sessions were deliberately not sent for paid backfill in that change.
+The controlled title fixtures did not cover the observed empty metadata or failed-generation result.
+
+### Correction
+
+Keep native automatic naming for new dashboard sessions.
+Add a deterministic display fallback from saved user text.
+Use the first sentence when available, limited to 60 Unicode characters with an ellipsis when needed.
+Read the oldest 20 messages. If the first read contains only a later page, use totalMessages to request the oldest page.
+Select visible user text only. Do not use assistant text, tool output, or hidden reasoning.
+Cache up to 512 fallback titles and share pending reads.
+Do not cache empty or failed reads, because an accepted first input can arrive later.
+
+A custom label retains priority, including a custom label that resembles a random slug.
+Useful saved generated names also retain priority and can replace the fallback on a later refresh.
+Recognize native crustacean fallback slugs using the pinned adjective and crustacean vocabulary.
+Use the user-text excerpt instead of that random name when source text is available.
+
+This fallback is a text excerpt, not an AI summary.
+It changes only the application projection. It does not rename gateway sessions or rewrite history.
+It works for saved legacy sessions without a paid backfill request.
+It can be reconstructed from the gateway's retained messages after an API restart.
+The original F07 evidence remains above as a record of the earlier implementation.
+
+### Verification
+
+TypeScript, Oxlint, Oxfmt, all 21 integration checks, and the production build passed.
+The integration fixture now covers missing legacy metadata, oldest-page selection, native failure slugs, custom-name priority, cached reads, and later useful generated names.
+The rebuilt local API returned nonempty titles for all 12 saved conversations.
+Two successive list reads returned the same titles.
+After an API restart, all 12 titles were unchanged.
+Compose validation, gateway configuration validation, health, and authenticated readiness passed.
+No paid model request was made for diagnosis or verification.
+The cause of the native generation failure remains unresolved.
+
+Sources:
+
+- Read-only sessions.list and chat.history results from the running gateway.
+- Gateway log at 2026-10-16 07:10:46 UTC.
+- Pinned dist/conversation-label-generator-CJJ75isK.mjs: bounded label attempts and suppressed failure details.
+- Pinned dist/session-slug-DsU90tbm.mjs: native fallback vocabulary.

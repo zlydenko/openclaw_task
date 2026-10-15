@@ -65,6 +65,7 @@ export type Roster = {
 
 export type History = {
   messages?: unknown[];
+  totalMessages?: number;
   sessionId?: string;
   sessionInfo?: JsonRecord;
   inFlightRun?: { runId?: string; text?: string };
