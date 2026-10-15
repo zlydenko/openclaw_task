@@ -4,7 +4,6 @@ USER root
 RUN mkdir -p /home/node/.openclaw/workspace /etc/assessment \
     && chown -R node:node /home/node/.openclaw
 COPY docker/openclaw.json /etc/assessment/openclaw.json
-COPY docker/configure-concurrency.mjs /etc/assessment/configure-concurrency.mjs
 COPY docker/gateway-entrypoint.sh /usr/local/bin/gateway-entrypoint
 USER node
 WORKDIR /app

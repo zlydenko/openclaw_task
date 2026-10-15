@@ -10,9 +10,9 @@
     "start": "npm start --workspace @assessment/api",
     "dev": "npm run dev --workspace @assessment/web",
     "check": "npm run check --workspaces && npm run lint && npm run format:check",
-    "lint": "oxlint apps/api/src apps/web/src apps/web/vite.config.ts docker/configure-concurrency.mjs",
-    "format": "oxfmt apps/api/src apps/web package.json apps/api/package.json apps/api/tsconfig.json docker/configure-concurrency.mjs",
-    "format:check": "oxfmt --check apps/api/src apps/web package.json apps/api/package.json apps/api/tsconfig.json docker/configure-concurrency.mjs",
+    "lint": "oxlint apps/api/src apps/web/src apps/web/vite.config.ts",
+    "format": "oxfmt apps/api/src apps/web package.json apps/api/package.json apps/api/tsconfig.json",
+    "format:check": "oxfmt --check apps/api/src apps/web package.json apps/api/package.json apps/api/tsconfig.json",
     "dev:api": "npm run dev --workspace @assessment/api",
     "test": "npm test --workspace @assessment/web"
   },

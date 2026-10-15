@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Initial concurrency configuration — 2026-10-15
+
+- Keep the three-run gateway limit in the initial OpenClaw configuration.
+- Remove the startup override script. Preserve saved configuration on later starts.
+
 ## Conversation naming decision — 2026-10-15
 
 - Keep first-message excerpts as conversation titles for this stage.

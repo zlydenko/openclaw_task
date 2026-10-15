@@ -88,8 +88,8 @@ Its HTTP port is published only on `127.0.0.1:3000`.
 Plain gateway WebSocket traffic stays inside the trusted local Compose network.
 Do not use `docker compose down --volumes` to stop the application.
 
-The configuration template is used only for new state.
-Startup sets `agents.defaults.maxConcurrent` to 3 in saved configuration.
+The initial configuration sets `agents.defaults.maxConcurrent` to 3.
+It is used only when no saved configuration exists.
 Later starts preserve the saved configuration.
 The user-requested WSL memory cap remains 2 GB.
 

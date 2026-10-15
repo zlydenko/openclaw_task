@@ -90,7 +90,8 @@ Do not resend an accepted message because a browser stream closes.
 Cancellation targets the exact session and run through chat.abort.
 Up to three application conversations can run at once. Each conversation permits one active turn.
 Extra sends return 409. Pending and unresolved submissions retain their slots.
-The gateway uses `agents.defaults.maxConcurrent: 3`. Startup applies it to saved configuration.
+The initial gateway configuration sets `agents.defaults.maxConcurrent: 3`.
+Startup preserves saved configuration. Use the OpenClaw CLI to change an existing value.
 Each active conversation keeps its own gateway subscription, browser stream, and recovery state.
 Lost browser streams do not own the run lifetime.
 The backend checks gateway history after reconnect and never resends an unknown submission.
