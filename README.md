@@ -134,71 +134,29 @@ Do not expose this trusted single-user service publicly.
 
 ## Parallel conversations
 
-Up to three application conversations can run at the same time through one gateway.
-Each conversation maps to a separate OpenClaw session. Each session runs one turn at a time.
-OpenClaw provides this scheduling through its [command queue](https://docs.openclaw.ai/concepts/queue).
+The browser keeps separate streams for each conversation. Hono routes them through one OpenClaw connection.
+Three conversations can run at once, with one active turn per conversation. Extra sends currently return 409.
+The hard part is preserving message order, routing events, and recovering interrupted runs without duplicate paid requests.
 
-### Architecture
+### Accepting more messages
 
-```mermaid
-flowchart LR
-  A[Conversation A] <-->|POST / SSE| API[One Hono process]
-  B[Conversation B] <-->|POST / SSE| API
-  C[Conversation C] <-->|POST / SSE| API
-  API <-->|One official client / WebSocket| GW[One OpenClaw gateway]
-  GW --> SA[Session A]
-  GW --> SB[Session B]
-  GW --> SC[Session C]
-  SA --> MODEL[OpenRouter / Kimi]
-  SB --> MODEL
-  SC --> MODEL
-```
+A queue would accept waiting messages while three runs execute:
 
-The browser keeps a run controller and response stream for each conversation.
-Changing the selected conversation does not stop observation of the other runs.
-Hono reserves a run slot before its first asynchronous submission step.
-A second send to the same conversation returns `409 RUN_BUSY`.
-A fourth active or unresolved conversation returns `409 RUN_LIMIT`.
-These rejected sends do not reach the model. The application does not queue them.
+`Browser → Hono → queue → dispatcher (3 active runs) → OpenClaw`
 
-| Component | Responsibility |
+| Option | Trade-off |
 | --- | --- |
-| [Browser coordination](apps/web/src/chat.ts) | Keep separate run controllers, drafts, history reads, and recovery for each conversation |
-| [Backend run tracker](apps/api/src/chat/runs.ts) | Reserve slots, reject duplicates, and route text and tool events to the correct run |
-| [Gateway adapter](apps/api/src/openclaw.ts) | Keep subscriptions for all active conversations on one official client connection |
-| [Backend recovery](apps/api/src/chat/recovery.ts) | Find active application sessions after reconnect and reconcile each run with gateway history |
-| [Gateway startup](docker/configure-concurrency.mjs) | Set `agents.defaults.maxConcurrent` to 3 in new and saved configuration |
+| In-process queue | Simple for this local app. Waiting messages are lost on restart. |
+| [Redis Streams](https://redis.io/docs/latest/develop/data-types/streams/) | Shared queue with pending-message tracking. Needs configured persistence and another service. |
+| Increase execution capacity | More simultaneous runs require available memory, provider quota, and budget. Larger deployments can distribute conversations across gateways. |
 
-The backend and browser also enforce the limit of three in their code.
-Changing only the gateway setting does not change the application limit.
-One Hono process handles overlapping network requests. It does not start a process for each conversation.
+The queued design would return 202 with a job ID and show progress through SSE.
+Dispatch messages in order per conversation. Keep request IDs and reconcile interrupted jobs with OpenClaw before resubmitting them.
+Redis alone does not guarantee exactly-once model execution.
 
-### Why this needs more than a configuration change
-
-The original application had one active-run slot and one browser run controller.
-Its gateway adapter replaced the previous subscription when it subscribed to another session.
-Parallel operation required changes to all three layers.
-
-- **Admission must be atomic.** Pending submissions already consume capacity. Two requests must not reserve the same conversation while awaiting gateway acceptance. The backend enforces this across browser tabs.
-- **Events can overlap.** Text and tool events must match the session and acknowledged run. Events can arrive before acceptance, so each pending run needs bounded buffers. Tool and chat sequence numbers are tracked separately.
-- **Navigation must not own a run.** Each stream continues while another conversation is visible. A history read for one conversation must not overwrite a newer update or block recovery in another conversation.
-- **Cancellation is asynchronous.** Stop targets one session and run. Its slot stays reserved until a terminal event or authoritative recovery confirms that the run ended. Completion can win the cancellation race.
-- **Connection loss does not prove failure.** A dropped stream or lost acknowledgement can leave a paid request running. Recovery reads gateway state instead of repeating the message POST. Unknown submissions retain their slots. Unresolved gateway state can pause new sends across the application.
-- **Saved configuration needs an update.** Editing the template alone affects only new state. The startup script applies the concurrency setting to the existing gateway volume and preserves the other settings.
-
-The difficult part is keeping these states consistent while requests, events, reads, and reconnects finish in different orders.
-The gateway already supports parallel sessions. The application must preserve correct routing and avoid duplicate work.
-
-### Limits and verification
-
-The three slots bound application submissions. They do not guarantee three simultaneous provider responses or a fixed speed increase.
-Runs share the model provider, gateway resources, and agent workspace. Separate conversation histories do not isolate file changes made by tools.
-The 2 GB WSL memory cap and container memory limits remain in effect.
-Additional backend processes would need shared admission and run state to enforce one application-wide limit.
-
-Controlled HTTP/SSE checks cover three concurrent streams, rejection of a fourth send, event isolation, cancellation, slot reuse, and recovery.
-The running gateway setting and service health were checked. Three simultaneous paid model requests were not tested.
-See the [verification record](docs/verification.md#parallel-conversations--2026-10-16).
+Recommendation: start with an in-process queue. Use Redis when waiting work must survive restarts or multiple backend processes share the queue.
+Queues allow more waiting conversations; backlog and resource limits still apply.
+This design is proposed. Queueing is not implemented.
 
 ## Tool activity and recovery
 

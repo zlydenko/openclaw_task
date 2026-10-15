@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Message queue design notes — 2026-10-15
+
+- Shorten the parallel conversation report. Compare an in-process queue, Redis Streams, and more execution capacity.
+- Separate proposed message admission from the current three-run limit.
+
 ## Parallel conversation documentation — 2026-10-15
 
 - Explain the three-run architecture, admission checks, event routing, and recovery in the README.
