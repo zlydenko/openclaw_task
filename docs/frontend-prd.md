@@ -16,6 +16,7 @@ Agent tool permissions remain a gateway concern.
 - Default to dark monochrome: near-black surfaces, grey borders, and readable light text.
 - Provide a labelled light/dark switch. Save the choice locally and apply it before the first paint.
 - Use CSS variables for both themes, system fonts for messages, and monospace for status text.
+- Show a green connected-status dot in both themes. Use a pointer cursor for enabled clickable controls.
 - Put conversations and a New conversation button in a left sidebar.
 - Put the selected title, status, messages, and composer in the main area.
 - Use a collapsible sidebar on small screens. Keep the composer clear of messages.

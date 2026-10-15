@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Frontend usability — 2026-10-15
+
+- Show a green connected-status dot in both themes and consistent cursors for interactive controls.
+- Add the short CSR versus SSR rationale to the README.
+
 ## React frontend — 2026-10-15
 
 - Add a React, TypeScript, Vite, and plain CSS conversation interface.

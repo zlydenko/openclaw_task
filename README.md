@@ -145,6 +145,13 @@ Use Node.js 22.19 or newer. The Docker image pins Node.js 22.23.3.
 These checks do not use paid model credit.
 Credentials and local certificate files do not enter the Docker build context.
 
+## Rendering choice
+
+We use client-side rendering (CSR) for this local, interactive chat.
+This keeps deployment simple: Hono serves a static Vite build.
+The trade-off is that JavaScript must load before history appears.
+Server-side rendering (SSR) could include initial history in HTML, while live chat would still need client logic.
+
 ## Frontend development
 
 Use the Docker backend with the Vite development server.

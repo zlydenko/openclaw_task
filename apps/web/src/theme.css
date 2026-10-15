@@ -11,6 +11,7 @@
   --secondary: #c7c7c3;
   --muted: #92928e;
   --subtle: #747470;
+  --connected: #4ade80;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -27,4 +28,5 @@
   --secondary: #454541;
   --muted: #686861;
   --subtle: #75756e;
+  --connected: #15803d;
 }

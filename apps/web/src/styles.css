@@ -15,11 +15,25 @@ textarea {
   font: inherit;
 }
 button {
-  cursor: pointer;
   color: inherit;
+}
+:where(
+  button,
+  a[href],
+  summary,
+  select,
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"],
+  [role="button"]
+) {
+  cursor: pointer;
 }
 button:disabled {
   opacity: 0.4;
+}
+:where(button, select, input):disabled,
+[aria-disabled="true"] {
   cursor: not-allowed;
 }
 button,
@@ -255,8 +269,8 @@ button {
   flex-shrink: 0;
 }
 .connection-dot.is-ready {
-  background: var(--text);
-  border-color: var(--text);
+  background: var(--connected);
+  border-color: var(--connected);
 }
 .welcome {
   display: flex;
