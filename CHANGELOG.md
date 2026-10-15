@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Parallel conversation documentation — 2026-10-15
+
+- Explain the three-run architecture, admission checks, event routing, and recovery in the README.
+- Document shared resources, configuration updates, and the limits of the concurrency checks.
+
 ## Parallel conversations — 2026-10-15
 
 - Permit three concurrent conversations, with one active turn per conversation.
