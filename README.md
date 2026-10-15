@@ -138,6 +138,11 @@ Select **+ Images** or paste an image into the message box.
 Review the thumbnails. Use × to remove an image before sending.
 Send images with text or on their own.
 PNG, JPEG, WebP, and GIF are supported. The limit is four images and 5 MiB in total.
+
+The 5 MiB limit is an adjustable application limit, not an OpenClaw requirement.
+Base64 expands 5 MiB to about 6.7 MiB. This conservative limit bounds memory use in the 256 MiB backend with three concurrent conversations.
+The exact threshold was not benchmarked.
+
 Draft images stay with their conversation in memory. Rejected sends retain the draft.
 A page reload discards unsent drafts. The app never retries message POST requests automatically.
 
