@@ -3,6 +3,12 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Tool activity findings — 2026-10-15
+
+- Record the rejected apply_patch format and the separate streamed tool-name failure.
+- Explain the tool-content display warning and propose live activity rows with saved outcomes.
+- Keep the proposed display changes unimplemented.
+
 ## Frontend usability — 2026-10-15
 
 - Show a green connected-status dot in both themes and consistent cursors for interactive controls.
