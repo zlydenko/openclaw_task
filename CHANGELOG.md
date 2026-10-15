@@ -3,6 +3,12 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Frontend design — 2026-10-15
+
+- Define a React, TypeScript, Vite, and plain CSS frontend PRD.
+- Specify monochrome themes, conversations, streaming, cancellation, recovery, and animated waiting text.
+- Keep frontend implementation deferred.
+
 ## Backend cleanup — 2026-10-14
 
 - Extract type contracts, controllers, reusable request middleware, and SSE handling.

@@ -21,6 +21,7 @@ The full tool profile and direct definitions do not override existing service pe
 ## Application
 
 The [Hono backend PRD](backend-prd.md) defines the HTTP contract and failure behavior.
+The [React frontend PRD](frontend-prd.md) defines the planned interface and browser recovery behavior.
 
 ```text
 React browser
@@ -38,7 +39,8 @@ OpenRouter with moonshotai/kimi-k2-thinking
 Use React, TypeScript, Vite, and plain CSS.
 Use Hono on Node.js.
 Prefer one browser origin.
-Choose frontend serving and routing when the application is implemented.
+The frontend plan uses Vite for development and serves its production build through Hono.
+Use URL hashes for conversation selection. Frontend implementation remains deferred.
 
 | Component | Responsibility |
 | --- | --- |

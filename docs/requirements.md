@@ -70,6 +70,7 @@ React components remain deferred.
 R1 alone does not complete the full assessment.
 
 The [Hono backend PRD](backend-prd.md) defines the backend contract.
+The [React frontend PRD](frontend-prd.md) defines the proposed browser interface. Implementation remains deferred.
 The user authorized backend implementation in a later request.
 The backend uses the official 2026.10.3 client and protocol packages.
 

@@ -12,6 +12,7 @@ Use npm run check and npm run build for backend changes.
 Use the manual backend checks in docs/verification.md.
 Live model checks require opt-in and a small paid request budget.
 React remains deferred.
+Read docs/frontend-prd.md for the agreed frontend design. The current request authorizes documentation only.
 
 The user requested removal of the custom gateway probe and integration harness.
 Do not restore those components without a new request.
