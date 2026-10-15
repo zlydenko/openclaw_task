@@ -201,3 +201,22 @@ If the run fails or its outcome is unknown, read history and record the result b
 - Browser checks used the existing saved CAP diagram. Its image loaded after switching to another conversation and back. A full page reload loaded the same saved image through the Hono URL. No new chat message or paid model request was made.
 - Compose validation, API image build and startup, gateway configuration validation, health, readiness, and conversation reads passed. The gateway was kept running and all state volumes were preserved.
 - Images stay in native OpenClaw storage. Missing or removed native media cannot be restored by the preview route; the interface shows an unavailable state with an explicit image-only Retry.
+
+
+## Settings gateway indicator acceptance
+
+These checks define expected behavior for the proposed [Settings UI](settings-prd.md#gateway-indicator-during-settings-changes).
+They are not a record of completed checks. Use controlled backend lifecycle responses in the existing frontend integration checks; do not restore the removed gateway harness.
+
+1. Open Settings through the bottom-left user profile. Keep the existing top-right gateway indicator visible.
+2. While application turns are active, check the Awaiting OpenClaw agents to finish… loader in Settings. The gateway indicator must retain its actual health state and must not claim that waiting is a process reload.
+3. After the turns finish, select Apply changes. During native hot application, check that the indicator shows Updating settings… and a yellow (amber) transition state, without claiming a process restart.
+4. Exercise a confirmed native restart during settings application. The indicator must show yellow (amber) Reloading agent…, then yellow (amber) Reconnecting… or Recovering… as applicable. It must not stay green Connected throughout the reload.
+5. Restore the WebSocket connection before completing application confirmation and run reconciliation. Check that connection alone does not restore green success. Return to green Connected only after native application is confirmed, authenticated readiness passes, and recovery completes.
+6. Exercise a failed reload, unavailable gateway, and saved-but-unconfirmed application. Check red for confirmed reload failure or gateway unavailability, and yellow (amber) for an unconfirmed application without a confirmed failure. A confirmed failure takes precedence over a transition. Show a safe reason. Elapsed time must not produce a false success.
+7. Save USER.md or MEMORY.md without a native restart. Check that the health indicator does not falsely show Reloading agent….
+8. Switch conversations, close Settings, and check another tab while a transition is pending. Each view must converge on backend lifecycle state without cancelling observation or replaying a mutation.
+9. Check green, yellow (amber), and red in both themes, plus text labels, keyboard use, and reduced motion. Labels must match the colour and state. Do not communicate reload state through colour alone.
+
+A real restart exercise must preserve volumes and device identity. It does not require a paid model request.
+Keep paid active-run checks subject to the opt-in budget above. Do not force a real restart merely to test an ordinary hot application or file save.

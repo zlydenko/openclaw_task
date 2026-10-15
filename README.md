@@ -335,6 +335,7 @@ Read [requirements](docs/requirements.md) for the assessment scope and agreed to
 Read [architecture](docs/architecture.md) for the current setup and future application design.
 Read the [Hono backend PRD](docs/backend-prd.md) for the backend API and behavior.
 Read the [React frontend PRD](docs/frontend-prd.md) for the interface requirements and acceptance checks.
+Read the [OpenClaw settings UI PRD](docs/settings-prd.md) for the proposed tool toggles, model selection, USER.md and MEMORY.md editors, and reload behavior. This feature is not implemented.
 Use [gateway operation](docs/gateway-operation.md) for restart and configuration notes.
 Use [verification](docs/verification.md) for manual checks and application acceptance criteria.
 Read [findings](docs/findings.md) for historical integration results and limitations.

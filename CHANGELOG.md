@@ -3,6 +3,17 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Settings UI design — 2026-10-15
+
+- Define a draft PRD for individual tool toggles and chat and image-analysis model selection.
+- Add a dated low-cost OpenRouter shortlist with pricing and source links.
+- Specify native hot application, idle admission checks, device scope upgrade, and recovery without replay.
+- Explain the idle boundary and define the waiting loader, unresolved-run status, and explicit Apply action after waiting.
+- Add USER.md and MEMORY.md review, guarded edits, idle-wait behavior, and create-if-missing gateway startup requirements.
+- Make the existing bottom-left user profile component the proposed Settings entry point, with pointer and keyboard access.
+- Define green, yellow (amber), and red top-right gateway indicator states and verification for settings application, native reload, reconnect, recovery, and failure.
+- Keep implementation and runtime changes deferred.
+
 ## Saved image previews — 2026-10-15
 
 - Restore saved image previews after switching conversations and reloading the page.
