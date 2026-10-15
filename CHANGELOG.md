@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Conversation naming decision — 2026-10-15
+
+- Keep first-message excerpts as conversation titles for this stage.
+- Document model-based summaries as optional and explain that they can reuse the existing provider.
+
 ## Reliable conversation title fallback — 2026-10-15
 
 - Show short user-text titles for existing unnamed conversations.

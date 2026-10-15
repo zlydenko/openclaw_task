@@ -138,6 +138,10 @@ Conversations show a short title from their saved first user message when a usef
 This covers old conversations and failed native naming requests.
 Empty conversations keep the New conversation label until they contain a message.
 
+Keep these first-message excerpts for this stage. They use the first sentence, limited to 60 Unicode characters.
+A concise semantic summary would need a model inference request. It can reuse Kimi through OpenRouter; a separate provider is not required.
+A smaller utility model is an optional cost and latency choice. No utility model or paid title backfill is configured.
+
 OpenClaw still generates names for new conversations in the background.
 Custom names and useful generated names take precedence over the text excerpt.
 If OpenClaw returns a random crustacean name, the interface uses the text excerpt instead.

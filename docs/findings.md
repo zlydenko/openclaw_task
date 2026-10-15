@@ -463,3 +463,31 @@ Sources:
 - Gateway log at 2026-10-16 07:10:46 UTC.
 - Pinned dist/conversation-label-generator-CJJ75isK.mjs: bounded label attempts and suppressed failure details.
 - Pinned dist/session-slug-DsU90tbm.mjs: native fallback vocabulary.
+
+
+## F09 Keep first-message excerpts for conversation titles
+
+Decision date: 2026-10-15.
+
+The user confirmed that the first-message excerpts are sufficient for this stage.
+Keep the current title implementation.
+It selects the first sentence of saved user text and truncates it to 60 Unicode characters when needed.
+This operation uses no model inference and is not a semantic summary of the conversation.
+
+A concise topic summary would require a model inference request.
+That request can use the configured Kimi model through the existing OpenRouter provider.
+A separate external provider is not required.
+OpenClaw also supports a utilityModel for short tasks such as title generation.
+A smaller utility model can reduce latency and cost, but it remains an optional improvement.
+Each generation request can use paid provider credit.
+
+No utility model or paid title backfill was added.
+No paid model request was made during this review.
+The existing native naming configuration and saved-name priority remain unchanged.
+F08 records the observed native failure and the verified excerpt fallback.
+This decision updates documentation only.
+
+Sources:
+
+- [Official utility model configuration](https://docs.openclaw.ai/gateway/config-agents/models)
+- [Official session naming](https://docs.openclaw.ai/web/control-ui/sessions-and-sidebar#new-session-names)
