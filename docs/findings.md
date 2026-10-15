@@ -491,3 +491,21 @@ Sources:
 
 - [Official utility model configuration](https://docs.openclaw.ai/gateway/config-agents/models)
 - [Official session naming](https://docs.openclaw.ai/web/control-ui/sessions-and-sidebar#new-session-names)
+
+## F10 Memory save ended without a tool call
+
+Finding date: 2026-10-15.
+Conversation: f48b8dba-395d-46d3-9f85-ec4fa6bb33cd.
+
+The agent promised to save North, then ended the turn without a tool call.
+The follow-up did the same. Saved memory files did not contain North.
+The transcript records stopReason: stop for both visible replies.
+The interface marks the gateway's final event Complete; this does not confirm task success.
+
+Gateway logs show a missing MEMORY.md read and two reasoning-only recovery attempts.
+Two OpenRouter HTTP 400 responses also occurred while background title generation failed.
+Their error bodies were not logged, so their relation to the missing write is unresolved.
+No write attempt or write-permission error was recorded. The underlying cause remains unknown.
+
+Evidence: saved gateway transcript, Docker logs, and the internal gateway log.
+No paid model request or runtime change was made during diagnosis.
