@@ -89,6 +89,7 @@ Plain gateway WebSocket traffic stays inside the trusted local Compose network.
 Do not use `docker compose down --volumes` to stop the application.
 
 The configuration template is used only for new state.
+Startup sets `agents.defaults.maxConcurrent` to 3 in saved configuration.
 Later starts preserve the saved configuration.
 The user-requested WSL memory cap remains 2 GB.
 
@@ -122,7 +123,8 @@ Cancellation acceptance does not prove the run stopped.
 Read the terminal event or history to check its outcome.
 Only application conversations appear in this API.
 Empty conversations exist in memory until their first accepted message.
-The backend permits one active application run and returns 409 for extra sends.
+The backend permits three active application runs across separate conversations.
+Each conversation permits one active run. Extra sends return 409.
 An unresolved submission blocks later sends. Restarting is not a safe retry procedure.
 
 Use `localhost` in these examples. Host and Origin checks reject other origins by default.
@@ -182,8 +184,8 @@ If your network needs custom CA certificates, use the two Compose files from the
 Do not change the proxy Host or remove the backend Origin checks.
 The production build runs through Hono on port 3000. It does not need a Vite server.
 
-The interface keeps one known active run across conversation navigation.
-Send is paused while that run is active or unresolved. You can still edit drafts.
+The interface tracks up to three active or unresolved runs across conversation navigation.
+Send is paused in a busy conversation or when all three slots are in use. You can still edit drafts.
 Stop requests cancellation. Wait for the confirmed outcome.
 A lost stream recovers through history reads. The interface does not repeat message requests.
 Only the theme is saved in browser storage. Drafts are lost on page refresh.

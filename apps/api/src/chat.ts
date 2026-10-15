@@ -20,8 +20,15 @@ export class Chat {
   constructor(private gateway: OpenClaw) {
     this.conversations = new Conversations(gateway);
     this.runs = new RunTracker(gateway, {
-      idle: () => {
-        if (gateway.authenticated && !this.stopped) this.ready = true;
+      idle: (id) => {
+        void gateway.unsubscribe(id).catch(() => {});
+        if (
+          gateway.authenticated &&
+          !this.stopped &&
+          !this.recovering &&
+          ![...this.runs.active.values()].some((run) => run.uncertain)
+        )
+          this.ready = true;
       },
       uncertain: () => {
         this.ready = false;
@@ -39,15 +46,18 @@ export class Chat {
       this.runs.interrupt("GATEWAY_OFFLINE", "Connection lost. Read history before sending again.");
     });
     gateway.onGap(() => {
-      if (this.runs.active) void this.recover();
+      if (this.runs.active.size) void this.recover();
     });
     gateway.onEvent((event) => this.runs.receive(event));
     gateway.onTool((event) => this.runs.receiveTool(event));
 
     this.reconcileTimer = setInterval(() => {
-      const run = this.runs.active;
-
-      if (run && gateway.authenticated && (run.uncertain || Date.now() - run.startedAt > 180_000)) {
+      if (
+        gateway.authenticated &&
+        [...this.runs.active.values()].some(
+          (run) => run.uncertain || Date.now() - run.startedAt > 180_000,
+        )
+      ) {
         void this.recover();
       }
     }, 5000);
@@ -92,14 +102,10 @@ export class Chat {
   async history(id: string, page: Page) {
     this.requireConnection();
 
-    await this.conversations.known(id, this.runs.active);
+    await this.conversations.known(id, this.runs.active.get(id));
 
-    const history = await this.conversations.history(
-      id,
-      page,
-      this.runs.active?.conversationId === id,
-    );
-    const run = this.runs.active?.conversationId === id ? this.runs.active : null;
+    const history = await this.conversations.history(id, page, this.runs.active.has(id));
+    const run = this.runs.active.get(id);
 
     return {
       ...history,
@@ -157,7 +163,7 @@ export class Chat {
   }
 
   async cancel(id: string, runId: string) {
-    const run = this.runs.active;
+    const run = this.runs.active.get(id);
 
     if (!run || run.conversationId !== id || run.runId !== runId) {
       throw new ApiError(404, "RUN_NOT_FOUND", "Active run not found.");

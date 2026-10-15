@@ -22,7 +22,8 @@ export class OpenClaw {
   private connectedListeners = new Set<Listener>();
   private disconnectedListeners = new Set<Listener>();
   private gapListeners = new Set<Listener>();
-  private subscribed: string | null = null;
+  private subscribed = new Set<string>();
+  private subscriptionQueue = Promise.resolve();
   authenticated = false;
   reason = "CONNECTING";
 
@@ -59,7 +60,8 @@ export class OpenClaw {
         this.epoch++;
         this.authenticated = true;
         this.reason = "RECOVERING";
-        this.subscribed = null;
+        this.subscribed.clear();
+        this.subscriptionQueue = Promise.resolve();
 
         for (const listener of this.connectedListeners) listener();
       },
@@ -67,7 +69,8 @@ export class OpenClaw {
         this.epoch++;
         this.authenticated = false;
         if (this.reason !== "PAIRING_REQUIRED") this.reason = "GATEWAY_OFFLINE";
-        this.subscribed = null;
+        this.subscribed.clear();
+        this.subscriptionQueue = Promise.resolve();
 
         for (const listener of this.disconnectedListeners) listener();
       },
@@ -159,16 +162,32 @@ export class OpenClaw {
     });
   }
 
-  async subscribe(id: string) {
+  subscribe(id: string) {
+    return this.setSubscription(id, true);
+  }
+
+  unsubscribe(id: string) {
+    return this.setSubscription(id, false);
+  }
+
+  private setSubscription(id: string, enabled: boolean) {
     const key = sessionKey(id);
+    const epoch = this.epoch;
+    const pending = this.subscriptionQueue.then(async () => {
+      if (!this.isCurrent(epoch)) throw new Error("Connection changed");
+      if (this.subscribed.has(key) === enabled) return;
 
-    if (this.subscribed === key) return;
+      await this.client.request(
+        enabled ? "sessions.messages.subscribe" : "sessions.messages.unsubscribe",
+        { key },
+      );
+      if (!this.isCurrent(epoch)) throw new Error("Connection changed");
+      if (enabled) this.subscribed.add(key);
+      else this.subscribed.delete(key);
+    });
+    this.subscriptionQueue = pending.catch(() => {});
 
-    if (this.subscribed)
-      await this.client.request("sessions.messages.unsubscribe", { key: this.subscribed });
-    await this.client.request("sessions.messages.subscribe", { key });
-
-    this.subscribed = key;
+    return pending;
   }
 
   history(id: string, limit = 50, offset = 0, runId?: string) {

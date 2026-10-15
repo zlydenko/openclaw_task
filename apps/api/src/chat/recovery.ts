@@ -5,8 +5,8 @@ import type { History, Run } from "../types.ts";
 import type { Conversations } from "./conversations.ts";
 import type { RunTracker } from "./runs.ts";
 
-async function activeConversation(gateway: OpenClaw, epoch: number) {
-  let id: string | null = null;
+async function activeConversations(gateway: OpenClaw, epoch: number) {
+  const ids = new Set<string>();
   let offset = 0;
 
   while (true) {
@@ -19,15 +19,13 @@ async function activeConversation(gateway: OpenClaw, epoch: number) {
         (Array.isArray(row.activeRunIds) && row.activeRunIds.length > 0);
 
       if (!candidate || !uuid.test(candidate) || !active) continue;
-      if (id !== null) throw new Error("Multiple active sessions require review");
-
-      id = candidate;
+      ids.add(candidate);
     }
 
     const next = roster.nextOffset ?? offset + roster.sessions.length;
     const more = roster.hasMore === true || (roster.total !== undefined && next < roster.total);
 
-    if (!more) return id;
+    if (!more) return ids;
 
     if (next <= offset || !gateway.isCurrent(epoch)) {
       throw new Error("Roster changed during recovery");
@@ -43,7 +41,7 @@ async function reconcileRun(
   runs: RunTracker,
   conversations: Conversations,
 ) {
-  if (runs.active !== run || run.done) return;
+  if (runs.active.get(run.conversationId) !== run || run.done) return;
 
   const activeIds = history.sessionInfo?.activeRunIds;
   const inFlight = history.inFlightRun;
@@ -91,23 +89,18 @@ export async function recoverGateway(
   conversations: Conversations,
   isStopped: () => boolean,
 ) {
-  const observed = runs.active;
+  const observed = new Map(runs.active);
   const epoch = await gateway.recoverSubscription();
+  const ids = await activeConversations(gateway, epoch);
 
-  // A terminal event can arrive while the subscription RPC is pending.
-  if (observed && runs.active !== observed) {
-    return gateway.isCurrent(epoch) && !isStopped() && !runs.active?.uncertain;
+  if (!gateway.isCurrent(epoch) || isStopped()) return false;
+
+  // Do not re-adopt a run that completed while the subscription or roster was pending.
+  for (const id of ids) {
+    if (!runs.active.has(id) && !observed.has(id)) runs.adopt(id);
   }
 
-  if (!runs.active) {
-    const id = await activeConversation(gateway, epoch);
-
-    if (id) runs.adopt(id);
-  }
-
-  const run = runs.active;
-
-  if (run) {
+  for (const run of runs.active.values()) {
     await gateway.subscribe(run.conversationId);
 
     const sequence = run.seq;
@@ -122,5 +115,9 @@ export async function recoverGateway(
     if (sequence === run.seq) await reconcileRun(run, history, runs, conversations);
   }
 
-  return gateway.isCurrent(epoch) && !isStopped() && !runs.active?.uncertain;
+  return (
+    gateway.isCurrent(epoch) &&
+    !isStopped() &&
+    ![...runs.active.values()].some((run) => run.uncertain)
+  );
 }

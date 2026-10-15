@@ -12,7 +12,7 @@ import { mergeHistory, groupActivityRows } from "./activity.ts";
 import { readEvents } from "./events.ts";
 import { ChatController } from "./chat.ts";
 import { Activity } from "./components/Activity.tsx";
-import { visibleMessages } from "./state.ts";
+import { activeTurns, visibleMessages } from "./state.ts";
 import type { Message } from "./types.ts";
 
 const disposals: (() => void)[] = [];
@@ -72,7 +72,7 @@ it("streams native tool activity through Hono into React and restores them from 
   await browser.refresh();
   browser.draft(id, "Save a harmless fixture fact.");
   const sending = browser.send();
-  await vi.waitFor(() => expect(browser.snapshot().active?.runId).toBe("run-1"));
+  await vi.waitFor(() => expect(browser.snapshot().turns[id]?.runId).toBe("run-1"));
 
   const ctx = { runId: "run-1", sessionKey: sessionKey(id), runtime: "openclaw" };
   const publish = (data: object, stream = "tool", key = ctx.sessionKey) => {
@@ -145,16 +145,16 @@ it("streams native tool activity through Hono into React and restores them from 
     "tool",
     sessionKey("another-conversation"),
   );
-  await vi.waitFor(() => expect(browser.snapshot().active?.activities).toHaveLength(2));
+  await vi.waitFor(() => expect(browser.snapshot().turns[id]?.activities).toHaveLength(2));
   await vi.waitFor(() =>
-    expect(browser.snapshot().active?.activities?.map((item) => item.status)).toEqual([
+    expect(browser.snapshot().turns[id]?.activities?.map((item) => item.status)).toEqual([
       "failed",
       "completed",
     ]),
   );
 
   const live = renderToStaticMarkup(
-    createElement(Activity, { activities: browser.snapshot().active!.activities! }),
+    createElement(Activity, { activities: browser.snapshot().turns[id]!.activities! }),
   );
   expect(live).toContain("Failed");
   expect(live).toContain("Completed");
@@ -181,7 +181,7 @@ it("streams native tool activity through Hono into React and restores them from 
   expect(serialized).not.toContain("SECRET_TOOL_OUTPUT");
   expect(messages.some((item) => item.unsupported)).toBe(false);
   expect(gateway.send).toHaveBeenCalledTimes(1);
-  expect(browser.snapshot().active).toBeNull();
+  expect(activeTurns(browser.snapshot())).toHaveLength(0);
 });
 
 it("joins calls and outcomes across history pages without empty reasoning rows or unsafe output", () => {

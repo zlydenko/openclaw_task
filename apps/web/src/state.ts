@@ -4,6 +4,9 @@ import type { ChatState, History, Message, Phase, Turn } from "./types.ts";
 export const isBusy = (phase?: Phase) =>
   !!phase && ["sending", "thinking", "responding", "stopping", "checking"].includes(phase);
 
+export const activeTurns = (state: ChatState) =>
+  Object.values(state.turns).filter((turn) => isBusy(turn.phase));
+
 export const initialState = (): ChatState => ({
   selected: null,
   items: [],
@@ -18,7 +21,6 @@ export const initialState = (): ChatState => ({
   errors: {},
   drafts: {},
   turns: {},
-  active: null,
 });
 
 export function mergeById<T extends { id: string }>(items: T[], more: T[]) {

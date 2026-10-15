@@ -26,7 +26,7 @@ Tool display and tool execution are separate concerns.
 | Browser transport | POST a message and return SSE in that response |
 | Gateway transport | One managed connection through the official client |
 | Persistence | OpenClaw owns messages; a private backend volume holds device identity and its token |
-| Concurrent work | One active application run in total; reject extra sends with 409 |
+| Concurrent work | Up to three active application conversations; one run per conversation; reject extra sends with 409 |
 | Storage | No application database, queue service, or event log |
 | Organization | Routes, one chat service, and one gateway adapter |
 
@@ -105,7 +105,8 @@ Reject reuse with different text.
 Retain at most 1000 completed requests for one hour. Never evict unresolved requests.
 Gateway deduplication has release-specific limits; permanent exactly-once execution across restarts is outside this scope.
 
-Validate input and reserve the single run slot before making a paid request.
+Validate input and reserve one of three run slots before making a paid request.
+Reserve each conversation separately. Pending and unresolved submissions count toward the limit.
 Reject new sends while gateway state or an earlier submission outcome is uncertain.
 Do not queue work silently.
 
@@ -206,7 +207,7 @@ Do not restore the removed harness. Ask before adding other direct tooling.
 | Fresh setup | Backend pairs through the documented procedure and becomes ready from its own container |
 | Text and streaming | A live request produces visible updates before a completed answer |
 | Context and isolation | A second turn retains a harmless marker; another conversation does not receive its events |
-| Duplicate and busy requests | Repeated IDs and concurrent sends do not create another gateway submission |
+| Duplicate and busy requests | Three separate conversations can run at once. Repeated IDs, same-conversation sends, and a fourth run create no extra gateway submission |
 | Invalid input | Rejected input creates no model run |
 | Browser loss | The run remains observable through history without a second submission |
 | Gateway loss or restart | Readiness fails, recovery restores known state, and no message is resubmitted |

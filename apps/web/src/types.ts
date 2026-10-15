@@ -78,7 +78,6 @@ export type ChatState = {
   errors: Record<string, string>;
   drafts: Record<string, string>;
   turns: Record<string, Turn>;
-  active: Turn | null;
 };
 
 export type RunCallbacks = {

@@ -66,7 +66,7 @@ Use relative URLs and browser `fetch`. Follow the backend PRD for bodies, limits
 
 | Request | Purpose |
 | --- | --- |
-| GET /ready | Gateway availability; this does not prove that the global run slot is free |
+| GET /ready | Gateway availability; this does not prove that a run slot is free |
 | GET /api/conversations | Conversation pages |
 | POST /api/conversations | Create a conversation with an empty JSON object |
 | GET /api/conversations/:id | History, `activeRun`, and `syncState` |
@@ -79,7 +79,9 @@ Replace visible text with each `message.text` snapshot. Use `completed.text` as 
 Keep partial text after cancellation or failure.
 
 Keep run observation above the selected view. Navigation must not cancel a run or mix messages.
-Disable Send globally while a known submission is pending, active, or unresolved. Allow draft editing and navigation.
+Track each conversation with its own run controller and stream. Permit up to three active or unresolved submissions.
+Disable Send in a busy conversation and when all three slots are in use. Allow draft editing and navigation.
+Recover each interrupted stream independently, including while other conversations are streaming.
 Handle 409 conflicts from another tab clearly. The API has no global active-run listing endpoint.
 Stop targets the exact gateway run. A 202 means cancellation was requested, not confirmed.
 Use the terminal event or history reconciliation to confirm that the run ended. Completion can win a cancellation race.
@@ -121,7 +123,7 @@ Persist only the theme locally. Do not store transcripts or drafts in browser st
 
 1. Create two conversations. Confirm separate histories after real streamed responses, navigation, and refresh.
 2. Check fragmented SSE, Unicode, heartbeats, and snapshot replacement without duplicate text.
-3. Navigate during a run. Confirm correct routing, the global Send lock, and cancellation outcome states.
+3. Navigate during a run. Confirm correct routing, the three-run limit, the per-conversation Send lock, and cancellation outcome states.
 4. Interrupt a stream and restart the backend. Confirm recovery without another message POST or false success.
 5. Check validation, missing conversations, conflicts, unavailable states, and retained drafts.
 6. Check both themes, saved choice, keyboard use, reduced motion, and a narrow mobile layout.

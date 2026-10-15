@@ -18,4 +18,6 @@ if [[ ! -e /home/node/.openclaw/openclaw.json ]]; then
   chmod 600 /home/node/.openclaw/openclaw.json
 fi
 
+node /etc/assessment/configure-concurrency.mjs
+
 exec node dist/index.js "$@"

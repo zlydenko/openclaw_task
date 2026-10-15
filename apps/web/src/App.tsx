@@ -5,7 +5,7 @@ import { Composer } from "./components/Composer.tsx";
 import { Messages } from "./components/Messages.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { Waiting } from "./components/Waiting.tsx";
-import { visibleMessages } from "./state.ts";
+import { activeTurns, isBusy, visibleMessages } from "./state.ts";
 
 const selectedFromHash = () => {
   const id = new URLSearchParams(location.hash.slice(1)).get("conversation");
@@ -27,7 +27,8 @@ export function App() {
   const title =
     state.items.find((item) => item.id === id)?.title ||
     `New conversation${id ? " · " + id.slice(0, 8) : ""}`;
-  const otherRun = state.active && state.active.conversationId !== id;
+  const active = activeTurns(state);
+  const otherRuns = active.filter((run) => run.conversationId !== id);
 
   const closeSidebar = () => {
     setSidebar(false);
@@ -125,12 +126,18 @@ export function App() {
             )}
           </div>
         </header>
-        {otherRun && (
+        {otherRuns.length > 0 && (
           <div className="notice-banner">
-            A response is in progress in another conversation.
-            <button className="text-button" onClick={() => select(state.active!.conversationId)}>
-              View conversation ↗
-            </button>
+            {active.length} of 3 conversation slots in use.
+            {otherRuns.map((run) => (
+              <button
+                key={run.conversationId}
+                className="text-button"
+                onClick={() => select(run.conversationId)}
+              >
+                View {run.conversationId.slice(0, 8)} ↗
+              </button>
+            ))}
           </div>
         )}
         {id ? (
@@ -188,14 +195,15 @@ export function App() {
                 stop={() => void chat.cancel()}
                 blocked={
                   !state.ready ||
-                  !!state.active ||
+                  isBusy(turn?.phase) ||
+                  active.length >= 3 ||
                   !!state.loading[id] ||
                   !view ||
                   view.syncState !== "ready" ||
                   !!state.errors[id]
                 }
-                canStop={!!state.active?.runId && state.active.conversationId === id}
-                stopping={state.active?.phase === "stopping"}
+                canStop={!!turn?.runId && isBusy(turn.phase)}
+                stopping={turn?.phase === "stopping"}
               />
             </div>
           </>

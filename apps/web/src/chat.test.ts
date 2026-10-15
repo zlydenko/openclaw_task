@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChatController } from "./chat.ts";
-import { visibleMessages } from "./state.ts";
+import { activeTurns, visibleMessages } from "./state.ts";
 import type { History, StreamEvent } from "./types.ts";
 
 const first = "11111111-1111-4111-8111-111111111111";
@@ -105,7 +105,7 @@ describe("chat HTTP and stream integration", () => {
     const pending = controller.send();
     await vi.waitFor(() => expect(sends).toBe(1));
     frame("accepted");
-    await vi.waitFor(() => expect(controller.snapshot().active?.phase).toBe("thinking"));
+    await vi.waitFor(() => expect(controller.snapshot().turns[first]?.phase).toBe("thinking"));
     expect(controller.snapshot().drafts[first]).toBe("");
 
     stream.enqueue(new TextEncoder().encode(": heartbeat\r\n\r\n"));
@@ -115,7 +115,6 @@ describe("chat HTTP and stream integration", () => {
     await vi.waitFor(() => expect(controller.snapshot().turns[first]?.text).toBe("Hello 🌒"));
     await select(second);
     controller.draft(second, "Another question");
-    await controller.send();
     expect(sends).toBe(1);
     expect(
       visibleMessages(controller.snapshot().views[second], controller.snapshot().turns[second]),
@@ -134,7 +133,7 @@ describe("chat HTTP and stream integration", () => {
     await vi.waitFor(() => expect(controller.snapshot().views[first]?.messages).toHaveLength(2));
 
     const state = controller.snapshot();
-    expect(state.active).toBeNull();
+    expect(activeTurns(state)).toHaveLength(0);
     expect(state.selected).toBe(second);
     expect(
       visibleMessages(state.views[first], state.turns[first]).map((message) => message.text),
@@ -147,10 +146,10 @@ describe("chat HTTP and stream integration", () => {
     await vi.waitFor(() => expect(sends).toBe(1));
     frame("accepted");
     frame("message", { text: "Partial" });
-    await vi.waitFor(() => expect(controller.snapshot().active?.text).toBe("Partial"));
+    await vi.waitFor(() => expect(controller.snapshot().turns[first]?.text).toBe("Partial"));
     await controller.cancel();
     expect(cancels).toBe(1);
-    expect(controller.snapshot().active?.phase).toBe("stopping");
+    expect(controller.snapshot().turns[first]?.phase).toBe("stopping");
     await controller.send();
     expect(sends).toBe(1);
 
@@ -159,7 +158,7 @@ describe("chat HTTP and stream integration", () => {
     await pending;
     expect(controller.snapshot().turns[first]?.phase).toBe("completed");
     expect(controller.snapshot().turns[first]?.text).toBe("Complete answer");
-    expect(controller.snapshot().active).toBeNull();
+    expect(activeTurns(controller.snapshot())).toHaveLength(0);
   });
 
   it("recovers a lost stream through reads without retrying the message", async () => {
@@ -176,7 +175,7 @@ describe("chat HTTP and stream integration", () => {
     stream.close();
     await pending;
     await vi.waitFor(() => expect(controller.snapshot().views[first]?.syncState).toBe("uncertain"));
-    expect(controller.snapshot().active?.phase).toBe("checking");
+    expect(controller.snapshot().turns[first]?.phase).toBe("checking");
     controller.draft(first, "Do not submit this yet");
     await controller.send();
     expect(sends).toBe(1);
@@ -186,12 +185,12 @@ describe("chat HTTP and stream integration", () => {
       activeRun: { runId: "another-run", requestId: "another-request" },
     });
     await controller.refresh(true);
-    expect(controller.snapshot().active?.runId).toBe("run-1");
-    expect(controller.snapshot().active?.notice).toContain("Another run is active");
+    expect(controller.snapshot().turns[first]?.runId).toBe("run-1");
+    expect(controller.snapshot().turns[first]?.notice).toContain("Another run is active");
 
     histories.set(first, empty(first));
     await controller.refresh(true);
-    expect(controller.snapshot().active).toBeNull();
+    expect(activeTurns(controller.snapshot())).toHaveLength(0);
     expect(controller.snapshot().turns[first]?.phase).toBe("ended");
     expect(controller.snapshot().turns[first]?.text).toBe("Still working");
     expect(sends).toBe(1);
@@ -205,7 +204,39 @@ describe("chat HTTP and stream integration", () => {
     expect(sends).toBe(1);
     expect(controller.snapshot().drafts[first]).toBe("Keep my draft");
     expect(controller.snapshot().turns[first]?.phase).toBe("failed");
-    expect(controller.snapshot().active).toBeNull();
+    expect(activeTurns(controller.snapshot())).toHaveLength(0);
+  });
+
+  it("recovers a lost background stream while another conversation keeps streaming", async () => {
+    controller.draft(first, "First question");
+    const firstPending = controller.send();
+    await vi.waitFor(() => expect(sends).toBe(1));
+    frame("accepted");
+    frame("message", { text: "First partial" });
+    const firstStream = stream;
+    const firstRequest = requestId;
+    await select(second);
+    controller.draft(second, "Second question");
+    const secondPending = controller.send();
+    await vi.waitFor(() => expect(sends).toBe(2));
+    frame("accepted", { runId: "run-2" }, second);
+    await vi.waitFor(() => expect(controller.snapshot().turns[second]?.phase).toBe("thinking"));
+    histories.set(first, {
+      ...empty(first),
+      activeRun: { runId: "run-1", requestId: firstRequest },
+      syncState: "uncertain",
+    });
+    firstStream.close();
+    await firstPending;
+    await vi.waitFor(() => expect(controller.snapshot().turns[first]?.phase).toBe("checking"));
+    histories.set(first, empty(first));
+    await controller.refresh(true);
+    expect(controller.snapshot().turns[first]?.phase).toBe("ended");
+    expect(controller.snapshot().turns[first]?.text).toBe("First partial");
+    expect(controller.snapshot().turns[second]?.phase).toBe("thinking");
+    expect(sends).toBe(2);
+    frame("completed", { runId: "run-2", text: "Second done" }, second);
+    await secondPending;
   });
 
   it("blocks an unknown acknowledgement until the server resolves it", async () => {
@@ -216,7 +247,7 @@ describe("chat HTTP and stream integration", () => {
     await vi.waitFor(() => expect(controller.snapshot().views[first]?.syncState).toBe("uncertain"));
     await controller.send();
     expect(sends).toBe(1);
-    expect(controller.snapshot().active?.phase).toBe("checking");
+    expect(controller.snapshot().turns[first]?.phase).toBe("checking");
     expect(controller.snapshot().drafts[first]).toBe("Possibly accepted");
   });
 
@@ -226,16 +257,21 @@ describe("chat HTTP and stream integration", () => {
       activeRun: { runId: "existing-run", requestId: null },
     });
     await controller.refresh(true);
-    expect(controller.snapshot().active?.runId).toBe("existing-run");
-    expect(controller.snapshot().active?.phase).toBe("checking");
+    expect(controller.snapshot().turns[first]?.runId).toBe("existing-run");
+    expect(controller.snapshot().turns[first]?.phase).toBe("checking");
     await controller.cancel();
     await controller.refresh(true);
-    expect(controller.snapshot().active?.phase).toBe("stopping");
+    expect(controller.snapshot().turns[first]?.phase).toBe("stopping");
     expect(cancels).toBe(1);
     await select(second);
-    controller.draft(second, "Blocked while another conversation runs");
-    await controller.send();
-    expect(sends).toBe(0);
+    controller.draft(second, "Work in parallel");
+    const pending = controller.send();
+    await vi.waitFor(() => expect(sends).toBe(1));
+    frame("accepted", {}, second);
+    frame("completed", { text: "Done" }, second);
+    await pending;
+    expect(controller.snapshot().turns[first]?.phase).toBe("stopping");
+    expect(controller.snapshot().turns[second]?.phase).toBe("completed");
   });
 
   it("discards history captured before a newer stream update", async () => {
@@ -243,7 +279,7 @@ describe("chat HTTP and stream integration", () => {
     const pending = controller.send();
     await vi.waitFor(() => expect(sends).toBe(1));
     frame("accepted");
-    await vi.waitFor(() => expect(controller.snapshot().active?.phase).toBe("thinking"));
+    await vi.waitFor(() => expect(controller.snapshot().turns[first]?.phase).toBe("thinking"));
 
     let resolveRead!: (response: Response) => void;
     const response = new Promise<Response>((resolve) => {
@@ -252,7 +288,9 @@ describe("chat HTTP and stream integration", () => {
     vi.mocked(fetch).mockImplementationOnce(() => response);
     const reading = controller.loadHistory(first);
     frame("message", { text: "The current snapshot" });
-    await vi.waitFor(() => expect(controller.snapshot().active?.text).toBe("The current snapshot"));
+    await vi.waitFor(() =>
+      expect(controller.snapshot().turns[first]?.text).toBe("The current snapshot"),
+    );
     resolveRead(
       Response.json({
         ...empty(first),
@@ -262,7 +300,7 @@ describe("chat HTTP and stream integration", () => {
     await reading;
 
     expect(controller.snapshot().views[first]?.messages).toEqual([]);
-    expect(controller.snapshot().active?.text).toBe("The current snapshot");
+    expect(controller.snapshot().turns[first]?.text).toBe("The current snapshot");
     frame("completed", { text: "The current snapshot" });
     stream.close();
     await pending;
@@ -281,7 +319,7 @@ describe("chat HTTP and stream integration", () => {
 
     expect(controller.snapshot().ready).toBe(false);
     expect(controller.snapshot().connection).toBe("Synchronizing…");
-    expect(controller.snapshot().active?.runId).toBe("recovering-run");
+    expect(controller.snapshot().turns[first]?.runId).toBe("recovering-run");
     expect(sends).toBe(0);
   });
 

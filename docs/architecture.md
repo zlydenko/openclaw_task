@@ -88,7 +88,10 @@ Subscribe before a run can emit events.
 Correlate events with both the session and run.
 Do not resend an accepted message because a browser stream closes.
 Cancellation targets the exact session and run through chat.abort.
-One active application run is permitted. Extra sends return 409.
+Up to three application conversations can run at once. Each conversation permits one active turn.
+Extra sends return 409. Pending and unresolved submissions retain their slots.
+The gateway uses `agents.defaults.maxConcurrent: 3`. Startup applies it to saved configuration.
+Each active conversation keeps its own gateway subscription, browser stream, and recovery state.
 Lost browser streams do not own the run lifetime.
 The backend checks gateway history after reconnect and never resends an unknown submission.
 

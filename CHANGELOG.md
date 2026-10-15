@@ -3,6 +3,13 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Parallel conversations — 2026-10-15
+
+- Permit three concurrent conversations, with one active turn per conversation.
+- Keep streaming, cancellation, tool events, and recovery separate for each run.
+- Apply the gateway concurrency limit to new and saved configuration.
+- Reject extra sends before gateway submission. Keep pending and unresolved runs reserved.
+
 ## Tool activity — 2026-10-15
 
 - Show live and saved tool activity with expandable safe summaries and explicit outcomes.

@@ -120,7 +120,7 @@ export type Submission = Pick<Run, "conversationId" | "requestId" | "runId"> & {
 };
 
 export type RunLifecycle = {
-  idle: Listener;
+  idle: (id: string) => void;
   uncertain: Listener;
   recover: Listener;
 };

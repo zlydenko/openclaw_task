@@ -132,6 +132,15 @@ Keep any evaluation set small and bound its paid request count.
 - Compose validation, Bash entrypoint syntax, gateway configuration validation, gateway health, and authenticated backend readiness passed. State volumes and device identities were retained.
 - No further paid requests were sent. The browser and backend did not repeat message POST requests.
 
+## Parallel conversations — 2026-10-16
+
+- TypeScript, Oxlint, Oxfmt, all 17 controlled HTTP/SSE integration checks, and the production build passed.
+- The checks cover three simultaneous conversations, rejection of a fourth send, same-conversation and duplicate rejection, event isolation, exact cancellation, and slot reuse after completion.
+- Recovery checks cover multiple adopted runs, gateway loss, an interrupted stream while another stream remains open, and an unknown acknowledgement that retains its slot.
+- Default and custom-CA Compose validation passed. Both rebuilt containers are healthy. Gateway configuration validation passed, and the saved concurrency setting is 3.
+- HTTP health, authenticated readiness, the frontend, and the conversation list returned 200. Saved gateway and device volumes were retained.
+- No paid model calls were made. The simultaneous provider requests were checked only with controlled responses.
+
 ## Evidence
 
 Record the date, command, software version, expected result, and actual result.

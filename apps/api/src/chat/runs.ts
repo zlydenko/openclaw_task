@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mergeChatStreamMessage } from "@openclaw/gateway-client";
 
 import { ApiError } from "../errors.ts";
-import { sessionKey, visibleMessage } from "../gateway/messages.ts";
+import { conversationId, visibleMessage } from "../gateway/messages.ts";
 import type { OpenClaw } from "../openclaw.ts";
 import type {
   ChatEvent,
@@ -17,7 +17,7 @@ import type {
 
 export class RunTracker {
   private requests = new Map<string, Run>();
-  active: Run | null = null;
+  readonly active = new Map<string, Run>();
 
   constructor(
     private gateway: OpenClaw,
@@ -43,8 +43,11 @@ export class RunTracker {
       );
     }
 
-    if (this.active) {
-      throw new ApiError(409, "RUN_BUSY", "A run is active or its outcome is uncertain.");
+    if (this.active.has(id)) {
+      throw new ApiError(409, "RUN_BUSY", "This conversation has an active or unresolved run.");
+    }
+    if (this.active.size >= 3) {
+      throw new ApiError(409, "RUN_LIMIT", "Three conversations are already active or unresolved.");
     }
 
     return hash;
@@ -53,7 +56,7 @@ export class RunTracker {
   start(id: string, requestId: string, hash: string) {
     const run = this.fresh(id, requestId, hash);
 
-    this.active = run;
+    this.active.set(id, run);
     this.requests.set(requestId, run);
 
     return run;
@@ -64,7 +67,7 @@ export class RunTracker {
 
     run.accepted = true;
     run.uncertain = true;
-    this.active = run;
+    this.active.set(id, run);
   }
 
   accept(run: Run, runId: string) {
@@ -80,7 +83,7 @@ export class RunTracker {
     run.earlyTools = [];
 
     // Settle tool snapshots before an early terminal chat event releases the run.
-    for (const event of earlyTools) this.receiveTool(event);
+    for (const event of earlyTools) this.applyTool(run, event);
     for (const event of early) this.receive(event);
   }
 
@@ -111,20 +114,20 @@ export class RunTracker {
     };
   }
 
-  interrupt(code: string, message: string) {
-    if (!this.active) return;
-
-    this.active.uncertain = true;
-    for (const [id, activity] of this.active.activities) {
-      if (activity.status === "running" || activity.status === "requested")
-        this.active.activities.set(id, { ...activity, status: "unknown" });
+  interrupt(code: string, message: string, affected?: Run) {
+    for (const run of affected ? [affected] : this.active.values()) {
+      run.uncertain = true;
+      for (const [id, activity] of run.activities) {
+        if (activity.status === "running" || activity.status === "requested")
+          run.activities.set(id, { ...activity, status: "unknown" });
+      }
+      this.emit(run, "failed", {
+        code,
+        message,
+        outcomeUnknown: true,
+        activities: [...run.activities.values()],
+      });
     }
-    this.emit(this.active, "failed", {
-      code,
-      message,
-      outcomeUnknown: true,
-      activities: [...this.active.activities.values()],
-    });
   }
 
   emit(run: Run, event: StreamEvent["event"], extra: JsonRecord = {}) {
@@ -156,9 +159,9 @@ export class RunTracker {
     }
     this.emit(run, event, { text: run.text, activities: [...run.activities.values()], ...extra });
 
-    if (this.active === run) {
-      this.active = null;
-      this.lifecycle.idle();
+    if (this.active.get(run.conversationId) === run) {
+      this.active.delete(run.conversationId);
+      this.lifecycle.idle(run.conversationId);
     }
 
     this.prune();
@@ -208,13 +211,15 @@ export class RunTracker {
   }
 
   receiveTool(event: ToolEvent) {
-    const run = this.active;
-    if (
-      !run ||
-      run.done ||
-      (event.sessionKey && event.sessionKey !== sessionKey(run.conversationId))
-    )
-      return;
+    for (const run of this.active.values()) {
+      if (event.sessionKey && conversationId(event.sessionKey) !== run.conversationId) continue;
+      if (run.accepted && event.runId !== run.runId) continue;
+      this.applyTool(run, event);
+    }
+  }
+
+  private applyTool(run: Run, event: ToolEvent) {
+    if (run.done) return;
 
     if (!run.accepted) {
       if (run.earlyTools.length < 32) run.earlyTools.push(event);
@@ -228,7 +233,11 @@ export class RunTracker {
     run.toolSeq = event.seq;
 
     if (!run.activities.has(event.activity.id) && run.activities.size >= 128) {
-      this.interrupt("ACTIVITY_LIMIT", "Tool activity exceeded the display limit. Read history.");
+      this.interrupt(
+        "ACTIVITY_LIMIT",
+        "Tool activity exceeded the display limit. Read history.",
+        run,
+      );
       return;
     }
     const previous = run.activities.get(event.activity.id);
@@ -245,9 +254,9 @@ export class RunTracker {
   }
 
   receive(event: ChatEvent) {
-    const run = this.active;
+    const run = this.active.get(conversationId(event.sessionKey) ?? "");
 
-    if (!run || event.sessionKey !== sessionKey(run.conversationId) || run.done) return;
+    if (!run || conversationId(event.sessionKey) !== run.conversationId || run.done) return;
 
     if (!run.accepted) {
       const bytes = Buffer.byteLength(JSON.stringify(event));

@@ -62,6 +62,7 @@
   "agents": {
     "ownership": "explicit",
     "defaults": {
+      "maxConcurrent": 3,
       "model": {
         "primary": "openrouter/moonshotai/kimi-k2-thinking"
       },

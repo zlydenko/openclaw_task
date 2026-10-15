@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { isBusy } from "../state.ts";
 import type { SidebarProps } from "../types.ts";
 
 export function Sidebar({
@@ -66,7 +67,7 @@ export function Sidebar({
                     })
                   : item.id.slice(0, 8)}
                 {item.updatedAt && !item.title && ` · ${item.id.slice(0, 8)}`}
-                {state.active?.conversationId === item.id && <span> · In progress</span>}
+                {isBusy(state.turns[item.id]?.phase) && <span> · In progress</span>}
               </span>
             </button>
           ))}

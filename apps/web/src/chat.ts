@@ -1,7 +1,7 @@
 import { mergeHistory } from "./activity.ts";
 import { api, ApiError } from "./api.ts";
 import { RunController } from "./run.ts";
-import { initialState, isBusy, mergeById } from "./state.ts";
+import { activeTurns, initialState, isBusy, mergeById } from "./state.ts";
 import type { ChatState } from "./types.ts";
 
 const errorText = (error: unknown) =>
@@ -15,20 +15,26 @@ export class ChatController {
   private timer?: ReturnType<typeof setTimeout>;
   private started = false;
   private refreshing = false;
-  private runner = new RunController({
-    change: (turn) =>
-      this.update({
-        turns: { ...this.state.turns, [turn.conversationId]: turn },
-        active: isBusy(turn.phase) ? turn : null,
-      }),
-    accepted: (id, input) => {
-      if (this.state.drafts[id] === input) this.draft(id, "");
-    },
-    settled: (id) => {
-      void this.loadHistory(id);
-      void this.loadList();
-    },
-  });
+  private runners = new Map<string, RunController>();
+
+  private runner(id: string) {
+    let runner = this.runners.get(id);
+    if (runner) return runner;
+
+    runner = new RunController({
+      change: (turn) => this.update({ turns: { ...this.state.turns, [id]: turn } }),
+      accepted: (_id, input) => {
+        if (this.state.drafts[id] === input) this.draft(id, "");
+      },
+      settled: () => {
+        void this.loadHistory(id);
+        void this.loadList();
+      },
+    });
+    this.runners.set(id, runner);
+
+    return runner;
+  }
 
   snapshot = () => this.state;
 
@@ -99,14 +105,15 @@ export class ChatController {
     const cursor = more ? this.state.views[id]?.nextCursor : undefined;
     if (more && !cursor) return;
 
-    const revision = this.runner.revision;
+    const runner = this.runner(id);
+    const revision = runner.revision;
     this.historyRequests.add(id);
     this.update({ loading: { ...this.state.loading, [id]: true } });
 
     try {
       const history = await api.history(id, cursor ?? undefined);
 
-      if (revision !== this.runner.revision) return;
+      if (revision !== runner.revision) return;
       const existing = this.state.views[id];
       const messages =
         more && existing ? mergeHistory(history.messages, existing.messages) : history.messages;
@@ -115,7 +122,7 @@ export class ChatController {
         views: { ...this.state.views, [id]: { ...history, messages } },
         errors: { ...this.state.errors, [id]: "" },
       });
-      this.runner.reconcile(history);
+      runner.reconcile(history);
     } catch (error) {
       this.update({ errors: { ...this.state.errors, [id]: errorText(error) } });
     } finally {
@@ -136,7 +143,8 @@ export class ChatController {
       !this.state.views[id] ||
       this.state.views[id]?.syncState !== "ready" ||
       this.state.errors[id] ||
-      isBusy(this.state.active?.phase)
+      isBusy(this.state.turns[id]?.phase) ||
+      activeTurns(this.state).length >= 3
     )
       return;
 
@@ -147,14 +155,17 @@ export class ChatController {
       return;
     }
 
-    await this.runner.send(
+    await this.runner(id).send(
       id,
       input,
       this.state.views[id]!.messages.map((message) => message.id),
     );
   };
 
-  cancel = () => this.runner.cancel();
+  cancel = () => {
+    const id = this.state.selected;
+    return id ? this.runners.get(id)?.cancel() : undefined;
+  };
 
   refresh = async (force = false) => {
     if (this.refreshing) return;
@@ -174,20 +185,21 @@ export class ChatController {
       if (ready && (!this.state.items.length || this.state.listError || force))
         await this.loadList();
 
-      if (!this.runner.streaming) {
-        const id = this.state.active?.conversationId ?? this.state.selected;
+      const active = activeTurns(this.state);
+      const ids = new Set(active.map((turn) => turn.conversationId));
+      if (this.state.selected) ids.add(this.state.selected);
+
+      for (const id of ids) {
+        if (this.runner(id).streaming) continue;
         if (
-          id &&
-          (force ||
-            this.state.active ||
-            !this.state.views[id] ||
-            this.state.views[id]?.syncState === "uncertain" ||
-            this.state.errors[id])
+          force ||
+          isBusy(this.state.turns[id]?.phase) ||
+          !this.state.views[id] ||
+          this.state.views[id]?.syncState === "uncertain" ||
+          this.state.errors[id]
         ) {
           await this.loadHistory(id);
         }
-        if (force && this.state.selected && this.state.selected !== id)
-          await this.loadHistory(this.state.selected);
       }
     } catch {
       this.update({
@@ -205,8 +217,8 @@ export class ChatController {
 
     if (this.started) {
       clearTimeout(this.timer);
-      const id = this.state.active?.conversationId ?? this.state.selected;
-      const retry = !this.state.ready || this.state.listError || (id && this.state.errors[id]);
+      const retry =
+        !this.state.ready || this.state.listError || Object.values(this.state.errors).some(Boolean);
       this.timer = setTimeout(this.tick, retry ? 10_000 : 3000);
     }
   };
@@ -230,6 +242,6 @@ export class ChatController {
     if (this.started) document.removeEventListener("visibilitychange", this.visible);
     this.started = false;
     clearTimeout(this.timer);
-    this.runner.close();
+    for (const runner of this.runners.values()) runner.close();
   }
 }
