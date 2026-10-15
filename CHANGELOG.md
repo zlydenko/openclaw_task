@@ -3,6 +3,15 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## React frontend — 2026-10-15
+
+- Add a React, TypeScript, Vite, and plain CSS conversation interface.
+- Add monochrome dark/light themes, responsive navigation, and animated waiting text.
+- Read real SSE snapshots and retain run state across conversation navigation.
+- Add cancellation and history recovery without automatic paid message retries.
+- Serve the production frontend through Hono in the existing Docker container.
+- Add controlled HTTP/SSE integration checks with Vitest.
+
 ## Frontend design — 2026-10-15
 
 - Define a React, TypeScript, Vite, and plain CSS frontend PRD.

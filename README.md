@@ -1,8 +1,9 @@
-# OpenClaw with a Hono backend
+# OpenClaw chat
 
 R1 runs one OpenClaw gateway container with OpenRouter and `moonshotai/kimi-k2-thinking`.
 Use OpenClaw's built-in terminal client to talk to the agent.
-The Hono backend runs in a second container. React remains deferred.
+The Hono backend and React interface run in a second container.
+The frontend uses TypeScript, Vite, and plain CSS.
 
 ## Start
 
@@ -45,7 +46,11 @@ The result must be `{"status":"ready"}`.
 `/health` checks the HTTP process only. It can pass before pairing.
 Later starts reuse the saved device token.
 
-5. Open the optional official terminal client:
+5. Open [the chat interface](http://localhost:3000).
+Create a conversation or select one from the sidebar.
+Use the appearance switch to select the light theme.
+
+6. Open the optional official terminal client:
 
 ```bash
 docker compose exec openclaw-gateway node dist/index.js tui
@@ -122,7 +127,7 @@ An unresolved submission blocks later sends. Restarting is not a safe retry proc
 
 Use `localhost` in these examples. Host and Origin checks reject other origins by default.
 Set `APP_ORIGIN` for the intended application origin.
-Set `DEV_ORIGIN` to one exact development frontend origin when React is added.
+Set `DEV_ORIGIN` to one exact origin when using the Vite development server.
 Do not expose this trusted single-user service publicly.
 
 ## Local code checks
@@ -130,12 +135,36 @@ Do not expose this trusted single-user service publicly.
 ```bash
 npm ci --ignore-scripts
 npm run check
+npm test
 npm run build
 ```
 
 Use Node.js 22.19 or newer. The Docker image pins Node.js 22.23.3.
 `npm run check` checks TypeScript, Oxlint, and Oxfmt.
+`npm test` runs frontend HTTP/SSE integration checks and Hono static-serving checks with controlled responses.
+These checks do not use paid model credit.
 Credentials and local certificate files do not enter the Docker build context.
+
+## Frontend development
+
+Use the Docker backend with the Vite development server.
+Set the exact development origin when starting the API container:
+
+```bash
+DEV_ORIGIN=http://localhost:5173 docker compose up -d api
+npm run dev
+```
+
+Open `http://localhost:5173`. Vite forwards `/api` and `/ready` to Hono.
+If your network needs custom CA certificates, use the two Compose files from the next section with the same `DEV_ORIGIN` prefix.
+Do not change the proxy Host or remove the backend Origin checks.
+The production build runs through Hono on port 3000. It does not need a Vite server.
+
+The interface keeps one known active run across conversation navigation.
+Send is paused while that run is active or unresolved. You can still edit drafts.
+Stop requests cancellation. Wait for the confirmed outcome.
+A lost stream recovers through history reads. The interface does not repeat message requests.
+Only the theme is saved in browser storage. Drafts are lost on page refresh.
 
 ## Optional custom CA certificates
 
@@ -168,6 +197,7 @@ Do this only in the terminal where you need the extra trust.
 | `docker/Dockerfile`            | Pinned official gateway image and startup script |
 | `docker/api.Dockerfile` | Pinned Node image and the backend build |
 | `apps/api/src` | Controllers, middleware, chat components, types, and the gateway adapter |
+| `apps/web/src` | Chat interface, HTTP/SSE client, run recovery, themes, and integration checks |
 | `docker/openclaw.json`         | Provider, model, authentication, and agent settings                  |
 | `docker/gateway-entrypoint.sh` | Prepare private secrets and seed initial configuration               |
 | `scripts/setup.mjs`            | Prepare local credentials |
@@ -181,7 +211,7 @@ Provider tool-call compatibility remains an unresolved finding.
 Read [requirements](docs/requirements.md) for the assessment scope and agreed tools.
 Read [architecture](docs/architecture.md) for the current setup and future application design.
 Read the [Hono backend PRD](docs/backend-prd.md) for the backend API and behavior.
-Read the [React frontend PRD](docs/frontend-prd.md) for the proposed interface. Frontend implementation remains deferred.
+Read the [React frontend PRD](docs/frontend-prd.md) for the interface requirements and acceptance checks.
 Use [gateway operation](docs/gateway-operation.md) for restart and configuration notes.
 Use [verification](docs/verification.md) for manual checks and application acceptance criteria.
 Read [findings](docs/findings.md) for historical integration results and limitations.

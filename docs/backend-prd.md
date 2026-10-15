@@ -1,7 +1,7 @@
 # Hono backend PRD (Product Requirements Document)
 
 Defined in R2. Backend implementation is now authorized.
-React remains deferred.
+The React interface is defined in the [frontend PRD](frontend-prd.md) and implemented in apps/web.
 
 ## Goal and scope
 
@@ -127,7 +127,7 @@ Do not rely on the global HTTP error handler to replace an open stream.
 
 ## Boundaries and resource limits
 
-Publish the backend only on host loopback. Use one browser origin through the later frontend proxy.
+Publish the backend only on host loopback. Serve the production frontend on that origin.
 During development, permit only the exact configured frontend origin.
 Check Host and Origin for browser requests that change state.
 Require JSON for those requests and reject unknown input fields.

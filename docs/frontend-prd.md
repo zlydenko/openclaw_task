@@ -1,6 +1,6 @@
 # React frontend PRD (Product Requirements Document)
 
-Status: design only. Do not start implementation until the user requests it.
+Status: implementation authorized by the user. The frontend source is in apps/web.
 Use the existing [Hono API](backend-prd.md) and [assessment requirements](requirements.md).
 
 ## Goal and scope

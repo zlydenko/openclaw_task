@@ -11,8 +11,12 @@ The user authorized backend implementation based on the PRD.
 Use npm run check and npm run build for backend changes.
 Use the manual backend checks in docs/verification.md.
 Live model checks require opt-in and a small paid request budget.
-React remains deferred.
-Read docs/frontend-prd.md for the agreed frontend design. The current request authorizes documentation only.
+The React frontend is implemented in apps/web. The user authorized implementation from docs/frontend-prd.md.
+Read that PRD before frontend changes. Run npm test for its HTTP/SSE integration checks.
+Hono serves the Vite production build. Use the Vite proxy for frontend development.
+Keep browser run observation independent of the selected conversation view.
+Do not retry message POST requests automatically.
+Keep frontend type declarations in apps/web/src/types.ts.
 
 The user requested removal of the custom gateway probe and integration harness.
 Do not restore those components without a new request.
@@ -44,7 +48,7 @@ Use gateway/ for device storage and message projection.
 Put a blank line between library imports and local imports.
 Put a blank line between logical code chunks and methods.
 
-## Agreed technologies for later stages
+## Agreed technologies
 
 Use TypeScript, Hono on Node.js, and React with Vite and plain CSS.
 Use npm workspaces when application packages exist.

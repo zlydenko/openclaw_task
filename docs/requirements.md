@@ -66,11 +66,11 @@ R1 runs one Docker gateway and the built-in OpenClaw terminal client.
 The custom probe and integration harness have been removed at the user's request.
 Keep one commit named `R1: setup openclaw agent in docker` for this stage.
 Hono routes and a backend container are now implemented.
-React components remain deferred.
+The React interface is implemented in apps/web and served through Hono.
 R1 alone does not complete the full assessment.
 
 The [Hono backend PRD](backend-prd.md) defines the backend contract.
-The [React frontend PRD](frontend-prd.md) defines the proposed browser interface. Implementation remains deferred.
+The [React frontend PRD](frontend-prd.md) defines the browser interface and recovery behavior.
 The user authorized backend implementation in a later request.
 The backend uses the official 2026.10.3 client and protocol packages.
 

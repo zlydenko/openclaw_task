@@ -1,8 +1,10 @@
 import type { Server } from "node:http";
+import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 
 import { createApp } from "./app.ts";
 import { Chat } from "./chat.ts";
+import { registerFrontend } from "./frontend.ts";
 import { OpenClaw } from "./openclaw.ts";
 
 const gateway = new OpenClaw(
@@ -11,6 +13,8 @@ const gateway = new OpenClaw(
 );
 const chat = new Chat(gateway);
 const app = createApp(chat, process.env.APP_ORIGIN, process.env.DEV_ORIGIN);
+
+registerFrontend(app, fileURLToPath(new URL("../../web/dist/", import.meta.url)));
 
 const server = serve(
   {

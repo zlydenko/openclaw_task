@@ -5,7 +5,8 @@
 One Docker service runs the OpenClaw gateway. A second service runs Hono.
 The official terminal client runs inside the gateway container.
 The gateway calls OpenRouter through HTTPS with `moonshotai/kimi-k2-thinking`.
-React remains deferred. The backend source is in apps/api/src.
+Hono serves the React production build on the same browser origin.
+The backend source is in apps/api/src. The frontend source is in apps/web/src.
 
 Compose supplies file secrets and a persistent `gateway_state` volume.
 The gateway port is not published on the host.
@@ -21,7 +22,7 @@ The full tool profile and direct definitions do not override existing service pe
 ## Application
 
 The [Hono backend PRD](backend-prd.md) defines the HTTP contract and failure behavior.
-The [React frontend PRD](frontend-prd.md) defines the planned interface and browser recovery behavior.
+The [React frontend PRD](frontend-prd.md) defines the interface and browser recovery behavior.
 
 ```text
 React browser
@@ -39,8 +40,8 @@ OpenRouter with moonshotai/kimi-k2-thinking
 Use React, TypeScript, Vite, and plain CSS.
 Use Hono on Node.js.
 Prefer one browser origin.
-The frontend plan uses Vite for development and serves its production build through Hono.
-Use URL hashes for conversation selection. Frontend implementation remains deferred.
+Vite serves frontend development through a proxy to Hono.
+Hono serves the production build. Conversation selection uses URL hashes.
 
 | Component | Responsibility |
 | --- | --- |
@@ -53,6 +54,13 @@ Use URL hashes for conversation selection. Frontend implementation remains defer
 | OpenClaw | Run the agent, retain conversation state, and call the provider |
 
 Backend type declarations live in `apps/api/src/types.ts`.
+Frontend type declarations live in `apps/web/src/types.ts`.
+The frontend API module reads JSON and POST response streams.
+A chat controller owns conversation state and read-only recovery polling.
+A separate run controller retains submission state while the selected view changes.
+React subscribes to that state through useSyncExternalStore.
+The browser saves only the theme preference. It keeps drafts and partial output in memory.
+Agent text is rendered as plain text. Production static responses use a same-origin content policy.
 Controllers consume validated Hono context values.
 Run admission remains synchronous inside the chat service.
 Gateway device storage and message projection have separate modules.

@@ -26,7 +26,7 @@ Record a failure before retrying it.
 ## Backend manual checks
 
 Use the pairing and API commands in the [README](../README.md).
-The backend is implemented. React remains deferred.
+The backend and React interface are implemented.
 
 1. Run `npm run check` and `npm run build`.
 2. Run `docker compose config --quiet` and start the services.
@@ -87,8 +87,7 @@ Do not clear state to force a retry. Inspect gateway state first.
 
 ## Full application acceptance
 
-React remains deferred.
-Verify these behaviors when they are implemented:
+Use these criteria for the full application. The frontend verification record below describes completed checks.
 
 | Behavior | Expected result |
 | --- | --- |
@@ -103,10 +102,24 @@ Verify these behaviors when they are implemented:
 | Credential handling | Provider and gateway credentials do not reach browser code or network responses |
 | Fresh setup | The README identifies all prerequisites and any required device approval |
 
-Use Vitest if automated integration checks are requested.
+Use npm test for the frontend integration checks.
 Prefer outcome evaluations over exact comparisons of generated prose.
 Avoid shallow unit tests and arbitrary coverage targets.
 Keep any evaluation set small and bound its paid request count.
+
+## Frontend verification — 2026-10-16
+
+- React/React DOM 19.3.1, Vite 8.3.4, and Vitest 5.0.5 were checked against the npm registry and pinned.
+- TypeScript, Oxlint, Oxfmt, and the production build passed. Ten Vitest integration checks passed with controlled HTTP/SSE responses. They cover fragmented Unicode streams, snapshot replacement, navigation isolation, cancellation races, interrupted observation, unknown submissions, adoption of existing runs, stale reads, opaque pagination, and Hono static-serving boundaries. They make no provider calls and do not emulate gateway RPC.
+- The production image built and started through Compose. Hono served the HTML, JavaScript, CSS, and theme bootstrap on port 3000. Health and authenticated readiness returned 200. Unknown API routes and local credential paths returned JSON 404 responses.
+- The browser checks covered new conversations, saved histories, Enter/Shift+Enter, blank and excessive input, light/dark themes, saved theme choice, and missing-conversation recovery. Desktop layout passed at 1024 × 768. The mobile sidebar passed at 390 × 844 with no horizontal overflow. Opening it moved focus inside; Escape closed it and returned focus. The reduced-motion CSS fallback was inspected. An operating-system motion preference was not emulated.
+- Five paid test requests were used under the user's limit of 20. The first showed real visible text before completion. The second recalled a harmless marker after navigating away and back. A new conversation returned NONE for the marker. A fourth run showed Stopping before a confirmed cancellation. Refreshing during the fifth run recovered its active state and later its history without another message submission. The browser correctly retained an unknown final outcome because it did not observe that run's terminal event.
+- A separate busy attempt returned 409 before admission and retained its draft. It did not start another model run.
+- A trailing newline in keyboard input exposed a duplicate optimistic row when gateway history trimmed that whitespace. Reconciliation now matches normalized outer whitespace while excluding prior message IDs. The integration check includes this case.
+- The fifth answer also addressed the cancelled prompt retained in conversation history. It did not follow the requested five-sentence limit. This exercise verifies recovery, not exact prose compliance or tool-call compatibility.
+- Vite on port 5173 loaded history and created an empty conversation through its proxy with the exact DEV_ORIGIN enabled. The temporary server was stopped and that origin was disabled afterward. The production origin remained available.
+- Served browser assets were compared with the local provider key and gateway token. Neither credential was present. Production responses included a same-origin content policy.
+- Existing gateway conversations, backend device state, volumes, and memory limits were preserved. These checks reused the approved device; they did not repeat first-time pairing in a fresh environment. Local Docker checks used the documented optional CA override required by this network.
 
 ## Evidence
 
