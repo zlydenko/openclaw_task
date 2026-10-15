@@ -132,6 +132,19 @@ Set `APP_ORIGIN` for the intended application origin.
 Set `DEV_ORIGIN` to one exact origin when using the Vite development server.
 Do not expose this trusted single-user service publicly.
 
+## Conversation names
+
+New conversations receive a short name from their first submitted message.
+OpenClaw generates and stores the name in the background.
+The sidebar updates through read-only refreshes. Empty conversations keep the New conversation label.
+Custom names take precedence. Saved names remain after a restart.
+
+The gateway uses its utility-model route when available, or the configured chat model.
+Naming uses separate paid provider requests. It sends at most 1,000 characters to generate a title of at most 60 characters.
+Generation failures use OpenClaw's native fallback behavior and do not require another message submission.
+Existing conversations keep their history and session keys. They are not renamed in bulk.
+See [the naming finding](docs/findings.md#f07-official-automatic-conversation-titles-require-an-interactive-session-key) for the protocol details and test limits.
+
 ## Parallel conversations
 
 The browser keeps separate streams for each conversation. Hono routes them through one OpenClaw connection.

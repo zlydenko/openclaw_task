@@ -100,6 +100,10 @@ The backend checks gateway history after reconnect and never resends an unknown 
 Use OpenClaw conversation history for the single-user application.
 Do not add an application database for this scope.
 Persist gateway configuration and conversations in the gateway volume.
+New application keys use agent:main:dashboard:assessment-api-<uuid> for native first-message naming.
+The gateway stores generated names in displayName. Custom labels take precedence.
+The adapter retains legacy assessment-api keys discovered through the roster.
+The browser refreshes title metadata through read-only list requests.
 The backend stores its device identity and token in the private api_state volume.
 Only the backend HTTP port is published, on host loopback.
 The backend has a 256 MiB container limit. The gateway retains its 1280 MiB limit.

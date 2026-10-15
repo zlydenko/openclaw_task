@@ -4,14 +4,17 @@ import { toolDetail, toolTarget, toolIdentifier, toolOutcome } from "./activity.
 import type { ChatEvent, ToolActivity, ProjectedMessage } from "../types.ts";
 import { record, text } from "../validation.ts";
 
-export const namespace = "agent:main:assessment-api-";
+export const namespace = "agent:main:dashboard:assessment-api-";
+export const legacyNamespace = "agent:main:assessment-api-";
 
 export const sessionKey = (id: string) => namespace + id;
 
 export const conversationId = (key: unknown) => {
   const value = text(key);
 
-  return value.startsWith(namespace) ? value.slice(namespace.length) : null;
+  const prefix = [namespace, legacyNamespace].find((item) => value.startsWith(item));
+
+  return prefix ? value.slice(prefix.length) : null;
 };
 
 export function readChatEvent(value: unknown): ChatEvent | null {

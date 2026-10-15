@@ -8,6 +8,14 @@ Test, log, and pricing dates remain as recorded.
 - Shorten the parallel conversation report. Compare an in-process queue, Redis Streams, and more execution capacity.
 - Separate proposed message admission from the current three-run limit.
 
+## Automatic conversation titles — 2026-10-15
+
+- Use OpenClaw native first-message naming for new application conversations.
+- Read saved display names and preserve custom-name priority.
+- Refresh sidebar titles without another message submission or loss of loaded pages.
+- Preserve legacy conversation keys, history, subscriptions, and cancellation.
+- Record the official naming flow and verification limits in findings.
+
 ## Parallel conversation documentation — 2026-10-15
 
 - Explain the three-run architecture, admission checks, event routing, and recovery in the README.

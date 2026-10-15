@@ -9,7 +9,7 @@ import { PROTOCOL_VERSION } from "@openclaw/gateway-protocol/version";
 
 import { readToolEvent } from "./gateway/activity.ts";
 import { loadGatewayDevice } from "./gateway/device.ts";
-import { readChatEvent, sessionKey } from "./gateway/messages.ts";
+import { conversationId, legacyNamespace, readChatEvent, sessionKey } from "./gateway/messages.ts";
 import { record } from "./validation.ts";
 import type { ChatListener, History, Listener, Roster, SendResult, ToolListener } from "./types.ts";
 
@@ -24,6 +24,7 @@ export class OpenClaw {
   private gapListeners = new Set<Listener>();
   private subscribed = new Set<string>();
   private subscriptionQueue = Promise.resolve();
+  private legacySessions = new Set<string>();
   authenticated = false;
   reason = "CONNECTING";
 
@@ -147,7 +148,7 @@ export class OpenClaw {
   }
 
   async roster(limit = 50, offset = 0, activeOnly = false, search = "assessment-api-") {
-    return this.client.request<Roster>("sessions.list", {
+    const result = await this.client.request<Roster>("sessions.list", {
       agentId: "main",
       search,
       limit,
@@ -160,6 +161,18 @@ export class OpenClaw {
       excludeCron: true,
       excludeSystem: true,
     });
+
+    for (const row of result.sessions) {
+      const id = conversationId(row.key);
+
+      if (id && row.key.startsWith(legacyNamespace)) this.legacySessions.add(id);
+    }
+
+    return result;
+  }
+
+  private key(id: string) {
+    return this.legacySessions.has(id) ? legacyNamespace + id : sessionKey(id);
   }
 
   subscribe(id: string) {
@@ -171,7 +184,7 @@ export class OpenClaw {
   }
 
   private setSubscription(id: string, enabled: boolean) {
-    const key = sessionKey(id);
+    const key = this.key(id);
     const epoch = this.epoch;
     const pending = this.subscriptionQueue.then(async () => {
       if (!this.isCurrent(epoch)) throw new Error("Connection changed");
@@ -192,7 +205,7 @@ export class OpenClaw {
 
   history(id: string, limit = 50, offset = 0, runId?: string) {
     return this.client.request<History>("chat.history", {
-      sessionKey: sessionKey(id),
+      sessionKey: this.key(id),
       limit,
       offset,
       maxBytes: 480 * 1024,
@@ -204,7 +217,7 @@ export class OpenClaw {
     return this.client.request<SendResult>(
       "chat.send",
       {
-        sessionKey: sessionKey(id),
+        sessionKey: this.key(id),
         message,
         idempotencyKey: requestId,
         timeoutMs: 180_000,
@@ -215,7 +228,7 @@ export class OpenClaw {
   }
 
   cancel(id: string, runId: string) {
-    return this.client.request("chat.abort", { sessionKey: sessionKey(id), runId });
+    return this.client.request("chat.abort", { sessionKey: this.key(id), runId });
   }
 
   async recoverSubscription() {

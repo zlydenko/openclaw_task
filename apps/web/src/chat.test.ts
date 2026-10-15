@@ -350,3 +350,42 @@ describe("chat HTTP and stream integration", () => {
     expect(sends).toBe(0);
   });
 });
+
+it("refreshes delayed titles after navigation and retains loaded list pages without resending", async () => {
+  await select(second);
+  vi.mocked(fetch).mockImplementationOnce(async () =>
+    Response.json({
+      items: [{ id: first }, { id: second }],
+      nextCursor: "older-page",
+    }),
+  );
+  await controller.loadList();
+  vi.mocked(fetch).mockImplementationOnce(async () =>
+    Response.json({
+      items: [{ id: "older", title: "Older conversation" }],
+      nextCursor: "last-page",
+    }),
+  );
+  await controller.loadList(true);
+  const originalFetch = vi.mocked(fetch).getMockImplementation()!;
+  vi.mocked(fetch).mockImplementation(async (url, options) => {
+    if (
+      new URL(url instanceof Request ? url.url : url, "http://localhost:3000").pathname ===
+      "/api/conversations"
+    )
+      return Response.json({
+        items: [{ id: first, title: "Plan a garden" }, { id: second }],
+        nextCursor: "older-page",
+      });
+    return originalFetch(url, options);
+  });
+  await controller.refresh();
+  expect(controller.snapshot().items).toEqual([
+    { id: first, title: "Plan a garden" },
+    { id: second },
+    { id: "older", title: "Older conversation" },
+  ]);
+  expect(controller.snapshot().nextCursor).toBe("last-page");
+  expect(controller.snapshot().selected).toBe(second);
+  expect(sends).toBe(0);
+});

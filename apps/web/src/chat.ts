@@ -78,7 +78,7 @@ export class ChatController {
     }
   };
 
-  loadList = async (more = false) => {
+  loadList = async (more = false, refresh = false) => {
     if (this.state.listLoading || (more && !this.state.nextCursor)) return;
 
     const revision = this.listRevision;
@@ -89,8 +89,11 @@ export class ChatController {
 
       if (revision !== this.listRevision) return;
       this.update({
-        items: more ? mergeById(this.state.items, page.items) : page.items,
-        nextCursor: page.nextCursor,
+        items: more || refresh ? mergeById(this.state.items, page.items) : page.items,
+        nextCursor:
+          refresh && this.state.items.length > page.items.length
+            ? this.state.nextCursor
+            : page.nextCursor,
       });
     } catch (error) {
       this.update({ listError: errorText(error) });
@@ -182,8 +185,7 @@ export class ChatController {
       });
       this.update({ ready, connection });
 
-      if (ready && (!this.state.items.length || this.state.listError || force))
-        await this.loadList();
+      if (ready) await this.loadList(false, !force);
 
       const active = activeTurns(this.state);
       const ids = new Set(active.map((turn) => turn.conversationId));

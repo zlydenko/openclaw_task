@@ -147,3 +147,20 @@ Record the date, command, software version, expected result, and actual result.
 Separate manual observations from automated checks.
 Keep unresolved errors visible.
 Do not include credentials, private keys, authentication frames, or private conversation transcripts.
+
+
+## Conversation titles — 2026-10-16
+
+- Inspected the pinned 2026.10.3 gateway distribution and official protocol schemas. Automatic naming requires an eligible interactive key and saves displayName. Roster reads do not request generation.
+- TypeScript, Oxlint, Oxfmt, all 21 integration checks, and the production build passed.
+- Controlled checks cover dashboard keys, unnamed empty conversations, stored display names, custom-name precedence, legacy history/send/subscription/cancellation routing, events for both prefixes, and delayed title updates after navigation. Loaded list pages and their cursor remain available during metadata refresh.
+- Compose validation, gateway configuration validation, and service health passed. The rebuilt API serves the naming change.
+- Running-API checks passed for health, authenticated readiness, saved history, empty conversation creation/listing, invalid request IDs, rejected Origin and Host headers, and missing conversations. No valid message was submitted.
+- The API restarted without deleting volumes. It reused its saved identity and token. A saved conversation returned the same history projection after restart. Empty in-memory conversations correctly disappeared.
+- Existing findings text was retained. The naming evidence was appended as F07.
+- No paid chat or title request was made. Generated wording, timing, provider compatibility, and persistence of a newly generated title require an opt-in live check. Controlled generated-name fixtures do not prove these provider outcomes.
+
+For a future approved live check, start one new conversation with a short topic.
+Wait for the title to replace the fallback without a second message POST.
+Refresh the browser and restart only the API. Confirm the same title and history.
+Count separate title-generation attempts in the paid budget, including the gateway's native fallback attempts.

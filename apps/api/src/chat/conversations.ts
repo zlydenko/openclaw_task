@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { ApiError } from "../errors.ts";
-import { conversationId, projectMessages, sessionKey } from "../gateway/messages.ts";
+import { conversationId, projectMessages } from "../gateway/messages.ts";
 import type { OpenClaw } from "../openclaw.ts";
 import { cursorFor } from "../pagination.ts";
 import { text, uuid } from "../validation.ts";
@@ -48,11 +48,11 @@ export class Conversations {
         const id = conversationId(row.key);
 
         if (!id || !uuid.test(id) || this.empty.has(id)) continue;
+        const title = text(row.label) || text(row.displayName) || text(row.derivedTitle);
+
         items.push({
           id,
-          ...(text(row.derivedTitle) || text(row.label)
-            ? { title: (text(row.derivedTitle) || text(row.label)).slice(0, 200) }
-            : {}),
+          ...(title ? { title: title.slice(0, 200) } : {}),
           ...(typeof row.updatedAt === "number" ? { updatedAt: row.updatedAt } : {}),
         });
       }
@@ -76,7 +76,7 @@ export class Conversations {
 
     const result = await this.gateway.roster(10, 0, false, "assessment-api-" + id);
 
-    if (result.sessions.some((row) => row.key === sessionKey(id))) return;
+    if (result.sessions.some((row) => conversationId(row.key) === id)) return;
     throw new ApiError(404, "NOT_FOUND", "Conversation not found.");
   }
 

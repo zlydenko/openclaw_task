@@ -334,3 +334,72 @@ Sources:
 - [Official client capabilities](https://docs.openclaw.ai/gateway/protocol/handshake#client-capabilities)
 - [Official event streams and text projections](https://docs.openclaw.ai/gateway/protocol/rpc-bootstrap-and-events)
 
+
+
+## F07 Official automatic conversation titles require an interactive session key
+
+Finding date: 2026-10-15.
+Inspected release: OpenClaw 2026.10.3. Wire protocol: 4.
+
+### Cause
+
+The application used agent:main:assessment-api-<uuid> session keys.
+The pinned gateway only schedules automatic dashboard titles for keys whose agent-local part starts with dashboard:, ios-, or node-.
+The application prefix did not qualify.
+Reading sessions.list with includeDerivedTitles does not start title generation.
+The backend also omitted the saved displayName field from its title projection.
+
+### Official behavior
+
+OpenClaw schedules naming in the background after chat.send admits an interactive turn.
+It uses the first non-command message, bounded to 1,000 characters.
+Its title prompt requests 3–6 words, at most 60 characters, in the message language.
+It saves the result in displayName and emits sessions.changed with reason chat.title.
+A saved custom label or existing explicit name takes precedence.
+Later messages do not replace that name.
+
+The gateway can use agents.defaults.utilityModel or its per-agent override.
+Without an available alternate utility route, normal dashboard naming can use the regular session model.
+Failed generation can use the native fallback and retry rules, then a two-word crustacean name.
+These are gateway rules. The application adds no title retry loop.
+Title generation makes separate paid provider requests.
+No new provider, model, or utility-model setting was added for this feature.
+
+The official sessions.title.prepare RPC is another option for client-prepared titles.
+It returns a title without creating a session or starting a chat turn.
+It uses the utility route only and can return null.
+This application uses automatic chat naming instead.
+It does not send draft text for speculative naming.
+
+### Implemented behavior
+
+New conversations use agent:main:dashboard:assessment-api-<uuid>.
+Their first accepted message now qualifies for the gateway's automatic naming flow.
+Empty conversations remain in memory and have no generated name.
+The backend selects a custom label first, then displayName, then derivedTitle.
+The browser refreshes names through read-only list requests on its existing visible-tab timer.
+It retains the selection and loaded list pages during these refreshes.
+
+Old application conversations retain their keys and history.
+Roster discovery records their legacy routing before history, subscription, send, and cancellation requests.
+Text and tool events accept both application prefixes and retain run-ID checks.
+There is no paid backfill or session-key migration for old conversations.
+No browser or backend message POST is replayed to obtain a name.
+
+### Verification and limits
+
+Controlled integration checks cover the native key prefix, unnamed empty conversations, title projection, custom-name precedence, legacy routing and events, delayed title refresh, and retained list pagination.
+These fixtures supply generated metadata. They do not prove provider title generation.
+TypeScript, Oxlint, Oxfmt, all 21 integration checks, and the production build passed.
+Runtime checks and the paid-check limit are recorded in [verification](verification.md#conversation-titles--2026-10-16).
+No paid title or chat request was made for this change.
+A live check of generated wording and timing remains unverified.
+
+### Sources
+
+- Pinned image distribution: dist/dashboard-session-title-mitw4dGu.mjs (source: src/gateway/dashboard-session-title.ts).
+- Pinned image distribution: dist/chat-send-handler-DdTqJY-G.mjs (source: src/gateway/server-methods/chat-send-background.ts).
+- Installed official protocol package: SessionsTitlePrepareParams and SessionsCreateParams in @openclaw/gateway-protocol/protocol.schema.json.
+- [Official session names](https://docs.openclaw.ai/web/control-ui/sessions-and-sidebar#new-session-names)
+- [Official utility model configuration](https://docs.openclaw.ai/gateway/config-agents/models)
+- [Official session RPCs](https://docs.openclaw.ai/gateway/protocol/rpc-session-control)
