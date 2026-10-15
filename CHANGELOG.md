@@ -3,6 +3,13 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Tool activity — 2026-10-15
+
+- Show live and saved tool activity with expandable safe summaries and explicit outcomes.
+- Use official tool events and native OpenClaw recovery.
+- Keep failed calls visible after later success.
+- Check HTTP/SSE delivery, history restoration, and conversation isolation.
+
 ## Tool activity findings — 2026-10-15
 
 - Record the rejected apply_patch format and the separate streamed tool-name failure.

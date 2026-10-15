@@ -49,7 +49,9 @@
             "id": "moonshotai/kimi-k2-thinking",
             "name": "Kimi K2 Thinking",
             "reasoning": true,
-            "input": ["text"],
+            "input": [
+              "text"
+            ],
             "contextWindow": 262144,
             "maxTokens": 4096
           }
@@ -92,7 +94,9 @@
     "enabled": false
   },
   "plugins": {
-    "allow": ["openrouter"],
+    "allow": [
+      "openrouter"
+    ],
     "entries": {
       "memory-core": {
         "enabled": false

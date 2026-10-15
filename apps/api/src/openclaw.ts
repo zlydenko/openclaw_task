@@ -7,16 +7,18 @@ import {
 import { readPairingConnectErrorDetails } from "@openclaw/gateway-protocol/connect-error-details";
 import { PROTOCOL_VERSION } from "@openclaw/gateway-protocol/version";
 
+import { readToolEvent } from "./gateway/activity.ts";
 import { loadGatewayDevice } from "./gateway/device.ts";
 import { readChatEvent, sessionKey } from "./gateway/messages.ts";
 import { record } from "./validation.ts";
-import type { ChatListener, History, Listener, Roster, SendResult } from "./types.ts";
+import type { ChatListener, History, Listener, Roster, SendResult, ToolListener } from "./types.ts";
 
 export class OpenClaw {
   private client: GatewayClient;
   private epoch = 0;
   private stopped = false;
   private listeners = new Set<ChatListener>();
+  private toolListeners = new Set<ToolListener>();
   private connectedListeners = new Set<Listener>();
   private disconnectedListeners = new Set<Listener>();
   private gapListeners = new Set<Listener>();
@@ -46,6 +48,7 @@ export class OpenClaw {
       scopes: ["operator.read", "operator.write"],
       caps: [
         GATEWAY_CLIENT_CAPS.SESSION_SCOPED_EVENTS,
+        GATEWAY_CLIENT_CAPS.TOOL_EVENTS,
         GATEWAY_CLIENT_CAPS.CHAT_ONLY_ASSISTANT_TEXT,
       ],
       minProtocol: PROTOCOL_VERSION,
@@ -85,6 +88,13 @@ export class OpenClaw {
         for (const listener of this.gapListeners) listener();
       },
       onEvent: (event) => {
+        if (event.event === "agent") {
+          const envelope = record(event.payload);
+          const tool = readToolEvent(envelope, String(envelope.stream));
+
+          if (tool) for (const listener of this.toolListeners) listener(tool);
+          return;
+        }
         if (event.event !== "chat") return;
 
         const payload = readChatEvent(event.payload);
@@ -110,6 +120,14 @@ export class OpenClaw {
 
     return () => {
       this.listeners.delete(listener);
+    };
+  }
+
+  onTool(listener: ToolListener) {
+    this.toolListeners.add(listener);
+
+    return () => {
+      this.toolListeners.delete(listener);
     };
   }
 

@@ -1,3 +1,4 @@
+import { groupActivityRows } from "./activity.ts";
 import type { ChatState, History, Message, Phase, Turn } from "./types.ts";
 
 export const isBusy = (phase?: Phase) =>
@@ -25,7 +26,7 @@ export function mergeById<T extends { id: string }>(items: T[], more: T[]) {
 }
 
 export function visibleMessages(history?: History, turn?: Turn): Message[] {
-  const messages = history?.messages ?? [];
+  const messages = groupActivityRows(history?.messages ?? []);
 
   if (!turn || !turn.input) return messages;
 
@@ -50,8 +51,15 @@ export function visibleMessages(history?: History, turn?: Turn): Message[] {
       pending: turn.phase === "sending",
       rejected: turn.phase === "failed" && !turn.runId,
     },
-    ...(turn.text
-      ? [{ id: "answer-" + turn.requestId, role: "assistant" as const, text: turn.text }]
+    ...(turn.text || turn.activities?.length
+      ? [
+          {
+            id: "answer-" + turn.requestId,
+            role: "assistant" as const,
+            text: turn.text,
+            activities: turn.activities,
+          },
+        ]
       : []),
   ];
 }

@@ -1,8 +1,17 @@
+export type ToolActivity = {
+  id: string;
+  name: string;
+  target?: string;
+  status: "requested" | "running" | "completed" | "failed" | "unknown";
+  detail?: string;
+};
+
 export type Conversation = { id: string; title?: string; updatedAt?: number };
 export type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  activities?: ToolActivity[];
   unsupported?: boolean;
   truncated?: boolean;
   pending?: boolean;
@@ -19,12 +28,13 @@ export type History = {
 };
 
 export type StreamEvent = {
-  event: "accepted" | "message" | "completed" | "cancelled" | "failed";
+  event: "accepted" | "message" | "activity" | "completed" | "cancelled" | "failed";
   data: {
     conversationId: string;
     requestId: string | null;
     runId: string | null;
     text?: string;
+    activities?: ToolActivity[];
     code?: string;
     message?: string;
     outcomeUnknown?: boolean;
@@ -51,6 +61,7 @@ export type Turn = {
   phase: Phase;
   notice: string;
   baselineIds: string[];
+  activities?: ToolActivity[];
 };
 
 export type ChatState = {
@@ -104,3 +115,5 @@ export type ComposerProps = {
   canStop: boolean;
   stopping: boolean;
 };
+
+export type ActivityProps = { activities: ToolActivity[] };

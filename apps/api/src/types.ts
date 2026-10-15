@@ -4,6 +4,7 @@ import type { DeviceIdentity, GatewayClientHostDeps } from "@openclaw/gateway-cl
 export type JsonRecord = Record<string, unknown>;
 export type Listener = () => void;
 export type ChatListener = (event: ChatEvent) => void;
+export type ToolListener = (event: ToolEvent) => void;
 
 export type MessageInput = { requestId: string; text: string };
 export type Page = { limit: number; offset: number; emptyOffset: number };
@@ -38,6 +39,21 @@ export type ChatEvent = {
   replace?: unknown;
 };
 
+export type ToolActivity = {
+  id: string;
+  name: string;
+  target?: string;
+  status: "requested" | "running" | "completed" | "failed" | "unknown";
+  detail?: string;
+};
+
+export type ToolEvent = {
+  sessionKey?: string;
+  runId: string;
+  seq: number;
+  activity: ToolActivity;
+};
+
 export type SessionRow = JsonRecord & { key: string };
 
 export type Roster = {
@@ -68,7 +84,7 @@ export type GatewayDevice = {
 export type ConversationItem = { id: string; title?: string; updatedAt?: number };
 
 export type StreamEvent = {
-  event: "accepted" | "message" | "completed" | "cancelled" | "failed";
+  event: "accepted" | "message" | "activity" | "completed" | "cancelled" | "failed";
   data: JsonRecord;
 };
 
@@ -91,6 +107,9 @@ export type Run = {
   message: unknown;
   text: string;
   last?: StreamEvent;
+  activities: Map<string, ToolActivity>;
+  toolSeq: number;
+  earlyTools: ToolEvent[];
   early: ChatEvent[];
   earlyBytes: number;
   observers: Set<StreamListener>;
@@ -104,4 +123,13 @@ export type RunLifecycle = {
   idle: Listener;
   uncertain: Listener;
   recover: Listener;
+};
+
+export type ProjectedMessage = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  unsupported?: boolean;
+  truncated?: boolean;
+  activities?: ToolActivity[];
 };

@@ -17,6 +17,9 @@ Hono serves the Vite production build. Use the Vite proxy for frontend developme
 Keep browser run observation independent of the selected conversation view.
 Do not retry message POST requests automatically.
 Keep frontend type declarations in apps/web/src/types.ts.
+Tool activity uses official OpenClaw events and saved history.
+Use native OpenClaw recovery.
+Do not replay tool events or message POST requests from the backend or browser.
 
 The user requested removal of the custom gateway probe and integration harness.
 Do not restore those components without a new request.

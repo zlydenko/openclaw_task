@@ -36,7 +36,8 @@ The backend and React interface are implemented.
 6. Send invalid JSON, extra fields, an invalid request ID, and excessive text. Expect 400 or 413.
 7. Send from another Origin or Host. Expect rejection.
 8. With a paid-check budget, send one short message. Observe accepted, message snapshots, and a terminal event.
-9. While it runs, repeat its request ID and submit another message. Expect 409 and no second run.
+9. While it runs, repeat its request ID and submit another message in the same conversation. Expect 409.
+   Start runs in two other conversations. A fourth concurrent conversation must return 409 without a gateway submission.
 10. Send a second turn that recalls a harmless marker. Use another conversation for the isolation check.
 11. For a separate approved live run, close the browser stream. Read history and activeRun. Do not repeat the POST.
 12. Cancel the exact active run. Check its confirmed terminal state.
@@ -120,6 +121,16 @@ Keep any evaluation set small and bound its paid request count.
 - Vite on port 5173 loaded history and created an empty conversation through its proxy with the exact DEV_ORIGIN enabled. The temporary server was stopped and that origin was disabled afterward. The production origin remained available.
 - Served browser assets were compared with the local provider key and gateway token. Neither credential was present. Production responses included a same-origin content policy.
 - Existing gateway conversations, backend device state, volumes, and memory limits were preserved. These checks reused the approved device; they did not repeat first-time pairing in a fresh environment. Local Docker checks used the documented optional CA override required by this network.
+
+## Tool activity verification — 2026-10-16
+
+- Thirteen controlled HTTP/SSE checks and the production build passed. They cover activity delivery through Hono and React, navigation isolation, safe summaries, history pages with separate calls and results, and outcomes received before send acknowledgement. These checks do not prove model behavior.
+- A browser read of the saved F05 conversation showed read as Completed and apply_patch as Failed. Expanding the failed action showed the patch-format explanation. Generic unsupported-content notices and empty reasoning rows were absent.
+- Two live model messages used the approved budget. The first executed read successfully, and the UI displayed its completed outcome. The model then stopped after announcing a patch without executing it.
+- The second requested a malformed patch. The model requested a nonexistent tool with a call_functions_apply_patch prefix. The saved result reported failure, and the UI displayed it. The model ended with a promise to correct it. The actual apply_patch tool did not execute, and the fixture remained unchanged.
+- Real patch correction with the selected provider route remains unverified. Tool-name and settled-turn behavior remain integration limitations.
+- Compose validation, Bash entrypoint syntax, gateway configuration validation, gateway health, and authenticated backend readiness passed. State volumes and device identities were retained.
+- No further paid requests were sent. The browser and backend did not repeat message POST requests.
 
 ## Evidence
 

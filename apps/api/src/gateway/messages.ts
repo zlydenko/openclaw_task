@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 
+import { toolDetail, toolTarget, toolIdentifier, toolOutcome } from "./activity.ts";
+import type { ChatEvent, ToolActivity, ProjectedMessage } from "../types.ts";
 import { record, text } from "../validation.ts";
-import type { ChatEvent } from "../types.ts";
 
 export const namespace = "agent:main:assessment-api-";
 
@@ -39,7 +40,17 @@ export function visibleMessage(value: unknown) {
 
             if (block.type === "text") return [text(block.text)];
 
-            if (block.type !== "thinking" && block.type !== "reasoning") unsupported = true;
+            if (
+              ![
+                "thinking",
+                "reasoning",
+                "toolCall",
+                "tool_use",
+                "toolResult",
+                "tool_result",
+              ].includes(text(block.type))
+            )
+              unsupported = true;
 
             return [];
           })
@@ -49,14 +60,50 @@ export function visibleMessage(value: unknown) {
 }
 
 export function projectMessages(messages: unknown[]) {
-  let budget = 400 * 1024;
+  let budget = 320 * 1024;
   const occurrences = new Map<string, number>();
 
-  // Keep every gateway row in the page, but cap each visible projection.
-  return messages.flatMap((value) => {
+  const projected = new Map<string, ProjectedMessage>();
+  const results = new Map<string, unknown>();
+  let toolCount = 0;
+
+  for (const value of messages) {
+    const row = record(value);
+    if (row.role === "toolResult" && typeof row.toolCallId === "string")
+      results.set(row.toolCallId, row);
+  }
+
+  const addTool = (value: unknown, outcome?: unknown) => {
+    const call = record(value);
+    const id = text(call.id) || text(call.toolCallId);
+    const name = text(call.name) || text(call.toolName) || "tool";
+    if (!toolIdentifier(id) || !/^[\w.:-]{1,120}$/.test(name)) return;
+    const key = "tool:" + id;
+    if (!projected.has(key) && toolCount++ >= 128) return;
+
+    const result = record(outcome);
+    const detail = outcome ? toolDetail(result, result.isError === true) : undefined;
+    const status =
+      detail === "The tool outcome could not be confirmed." ? "unknown" : toolOutcome(result);
+    const activity: ToolActivity = {
+      id,
+      name,
+      status,
+    };
+    const target = toolTarget(name, call.arguments ?? call.input);
+    if (target) activity.target = target;
+    if (detail) activity.detail = detail;
+    projected.set(key, { id: key, role: "assistant", text: "", activities: [activity] });
+  };
+
+  for (const value of messages) {
     const row = record(value);
 
-    if (row.role !== "user" && row.role !== "assistant") return [];
+    if (row.role === "toolResult") {
+      if (!projected.has("tool:" + text(row.toolCallId))) addTool(row, row);
+      continue;
+    }
+    if (row.role !== "user" && row.role !== "assistant") continue;
 
     const visible = visibleMessage(row);
     const meta = record(row.__openclaw);
@@ -78,14 +125,31 @@ export function projectMessages(messages: unknown[]) {
 
     budget = Math.max(0, budget - Buffer.byteLength(JSON.stringify(clipped)));
 
-    return [
-      {
-        id: `${base}:${row.role}:${sibling}`,
+    if (clipped || visible.unsupported || row.role === "user") {
+      const id = `${base}:${row.role}:${sibling}`;
+      projected.set(id, {
+        id,
         role: row.role,
         text: clipped,
         unsupported: visible.unsupported,
         truncated: bytes.length > cap,
-      },
-    ];
-  });
+      });
+    }
+
+    if (Array.isArray(row.content))
+      for (const block of row.content) {
+        const call = record(block);
+        if (call.type === "toolCall" || call.type === "tool_use")
+          addTool(call, results.get(text(call.id)));
+      }
+  }
+
+  if (toolCount > 128)
+    projected.set("activity-limit", {
+      id: "activity-limit",
+      role: "assistant",
+      text: "Additional tool activity is omitted by the display limit.",
+      truncated: true,
+    });
+  return [...projected.values()];
 }

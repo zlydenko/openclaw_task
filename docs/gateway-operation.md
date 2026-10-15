@@ -50,6 +50,14 @@ The full tool profile supplies tool definitions directly.
 Existing execution permissions and disabled services still apply.
 Read [findings](findings.md) before changing the provider API or claiming that tool calls work.
 
+## Tool recovery
+
+Use OpenClaw's native agent loop and provider recovery.
+The application does not repeat message submissions.
+Tool errors can lead to a corrected call. The model can stop before a correction succeeds.
+Check the Activity rows and final answer to confirm the outcome.
+Configuration validation does not prove that a model will produce a valid tool call.
+
 ## Local setup files
 
 Keep `openrouter_key` local and ignored by Git.

@@ -74,8 +74,13 @@ Keep session and run identifiers on applicable events.
 Use the official OpenClaw client behind a small adapter.
 The client and protocol packages are pinned to 2026.10.3, matching the gateway.
 The backend requests only operator.read and operator.write.
-It advertises session-scoped events and chat-only assistant text.
-It does not advertise approval or tool-display capabilities.
+It advertises session-scoped events, chat-only assistant text, and tool events.
+It does not advertise approval capabilities.
+Text and tool activity use separate bounded snapshots on the same HTTP/SSE response.
+The backend correlates agent tool events with the acknowledged run.
+History projection joins tool calls and results. React merges matching activity across loaded pages.
+OpenClaw owns tool correction and provider recovery through its native mechanisms.
+The backend and browser observe each tool call. They do not replay tools or message submissions.
 
 Use HTTP requests for message submission and SSE for response events.
 Keep the gateway WebSocket connection inside the backend.

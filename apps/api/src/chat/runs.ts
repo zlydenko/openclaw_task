@@ -12,6 +12,7 @@ import type {
   StreamEvent,
   Submission,
   TerminalEvent,
+  ToolEvent,
 } from "../types.ts";
 
 export class RunTracker {
@@ -75,6 +76,11 @@ export class RunTracker {
     run.early = [];
     run.earlyBytes = 0;
 
+    const earlyTools = run.earlyTools;
+    run.earlyTools = [];
+
+    // Settle tool snapshots before an early terminal chat event releases the run.
+    for (const event of earlyTools) this.receiveTool(event);
     for (const event of early) this.receive(event);
   }
 
@@ -86,6 +92,16 @@ export class RunTracker {
       observe: (listener) => {
         run.observers.add(listener);
 
+        if (run.activities.size)
+          listener({
+            event: "activity",
+            data: {
+              conversationId: run.conversationId,
+              requestId: run.requestId,
+              runId: run.runId,
+              activities: [...run.activities.values()],
+            },
+          });
         if (run.last && run.last.event !== "accepted") listener(run.last);
 
         return () => {
@@ -99,7 +115,16 @@ export class RunTracker {
     if (!this.active) return;
 
     this.active.uncertain = true;
-    this.emit(this.active, "failed", { code, message, outcomeUnknown: true });
+    for (const [id, activity] of this.active.activities) {
+      if (activity.status === "running" || activity.status === "requested")
+        this.active.activities.set(id, { ...activity, status: "unknown" });
+    }
+    this.emit(this.active, "failed", {
+      code,
+      message,
+      outcomeUnknown: true,
+      activities: [...this.active.activities.values()],
+    });
   }
 
   emit(run: Run, event: StreamEvent["event"], extra: JsonRecord = {}) {
@@ -113,7 +138,7 @@ export class RunTracker {
       },
     };
 
-    run.last = update;
+    if (event !== "activity") run.last = update;
 
     for (const observer of run.observers) observer(update);
   }
@@ -125,7 +150,11 @@ export class RunTracker {
     run.uncertain = false;
     run.finishedAt = Date.now();
 
-    this.emit(run, event, { text: run.text, ...extra });
+    for (const [id, activity] of run.activities) {
+      if (activity.status === "running" || activity.status === "requested")
+        run.activities.set(id, { ...activity, status: "unknown" });
+    }
+    this.emit(run, event, { text: run.text, activities: [...run.activities.values()], ...extra });
 
     if (this.active === run) {
       this.active = null;
@@ -169,10 +198,50 @@ export class RunTracker {
       seq: -1,
       message: { role: "assistant", content: "" },
       text: "",
+      activities: new Map(),
+      toolSeq: -1,
+      earlyTools: [],
       early: [],
       earlyBytes: 0,
       observers: new Set(),
     };
+  }
+
+  receiveTool(event: ToolEvent) {
+    const run = this.active;
+    if (
+      !run ||
+      run.done ||
+      (event.sessionKey && event.sessionKey !== sessionKey(run.conversationId))
+    )
+      return;
+
+    if (!run.accepted) {
+      if (run.earlyTools.length < 32) run.earlyTools.push(event);
+      else {
+        run.uncertain = true;
+        this.lifecycle.uncertain();
+      }
+      return;
+    }
+    if (event.runId !== run.runId || event.seq <= run.toolSeq) return;
+    run.toolSeq = event.seq;
+
+    if (!run.activities.has(event.activity.id) && run.activities.size >= 128) {
+      this.interrupt("ACTIVITY_LIMIT", "Tool activity exceeded the display limit. Read history.");
+      return;
+    }
+    const previous = run.activities.get(event.activity.id);
+    const activity = { ...previous, ...event.activity };
+    // A later start/policy frame cannot erase an observed terminal result.
+    if (
+      previous &&
+      ["completed", "failed"].includes(previous.status) &&
+      activity.status === "running"
+    )
+      activity.status = previous.status;
+    run.activities.set(activity.id, activity);
+    this.emit(run, "activity", { activities: [...run.activities.values()] });
   }
 
   receive(event: ChatEvent) {

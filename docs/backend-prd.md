@@ -14,7 +14,7 @@ Keep OpenRouter and `moonshotai/kimi-k2-thinking` configured in the gateway.
 The backend must not call OpenRouter directly.
 
 Include conversation creation, a conversation list, history, streamed answers, cancellation, and health.
-Defer accounts, attachments, model selection, tool display, approval interfaces, and public hosting.
+Include safe tool activity. Defer accounts, attachments, model selection, approval interfaces, and public hosting.
 The agent can still use tools permitted by its gateway configuration.
 Tool display and tool execution are separate concerns.
 
@@ -52,7 +52,9 @@ Return JSON except for a successful message submission.
 
 A list item contains `id`, an available title, and an available update time.
 A history message contains a stable display ID, role, and visible text.
-Mark unsupported content. Do not return reasoning or raw tool arguments and outputs.
+A tool activity row contains bounded call IDs, tool name, safe target, and outcome.
+Join calls and results by ID, including across loaded pages. An unavailable result has an unknown outcome.
+Mark other unsupported content. Do not return reasoning or raw tool arguments and outputs.
 
 Use opaque cursors for list and history pages. Default to 50 items; permit at most 100.
 Bound history responses to 512 KiB and mark truncated text.
@@ -80,7 +82,8 @@ Use these application event names:
 | --- | --- |
 | accepted | The gateway accepted the request |
 | message | `text` contains the complete visible answer so far; replace the displayed answer |
-| completed | `text` contains the final answer |
+| activity | `activities` contains the complete bounded tool activity snapshot; replace the prior snapshot |
+| completed | `text` contains the final answer and `activities` contains the latest tool outcomes |
 | cancelled | The gateway confirmed cancellation; partial text may remain |
 | failed | `code`, safe `message`, and `outcomeUnknown` explain the failure |
 
@@ -137,7 +140,10 @@ Limit a request body to 16 KiB and message text to 8 KiB of UTF-8.
 Limit a visible answer to 64 KiB.
 If that limit is exceeded, stop buffering, report the limit, and request cancellation.
 Keep the run slot reserved until the gateway confirms the outcome.
-Bound stream buffers and history projections.
+Bound stream buffers and history projections. Keep at most 128 tool calls per live run or history page.
+Keep tool activity separate from text snapshots. A non-terminal activity event must not close the stream.
+Observe official tool events by exact run ID.
+Do not compare tool sequence numbers with chat sequence numbers.
 When a client cannot keep up, close its stream and direct it to history.
 Keep run observation independent of that stream.
 
@@ -215,7 +221,9 @@ Record meaningful outcomes rather than shallow function checks.
 
 The [recorded tool-call failure](findings.md#f02-tool-call-name-changed-during-a-responses-stream) remains unresolved.
 Report it through the same error path.
-Do not claim that this backend repairs gateway or provider tool execution.
+Use OpenClaw's native agent loop and provider recovery.
+The model can stop before a correction succeeds. Provider failures can still end the run.
+The backend observes tool activity and never executes or retries a tool itself.
 
 ## Future accounts
 

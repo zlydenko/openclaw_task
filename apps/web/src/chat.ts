@@ -1,3 +1,4 @@
+import { mergeHistory } from "./activity.ts";
 import { api, ApiError } from "./api.ts";
 import { RunController } from "./run.ts";
 import { initialState, isBusy, mergeById } from "./state.ts";
@@ -108,7 +109,7 @@ export class ChatController {
       if (revision !== this.runner.revision) return;
       const existing = this.state.views[id];
       const messages =
-        more && existing ? mergeById(history.messages, existing.messages) : history.messages;
+        more && existing ? mergeHistory(history.messages, existing.messages) : history.messages;
 
       this.update({
         views: { ...this.state.views, [id]: { ...history, messages } },

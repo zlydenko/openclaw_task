@@ -89,7 +89,7 @@ Plain gateway WebSocket traffic stays inside the trusted local Compose network.
 Do not use `docker compose down --volumes` to stop the application.
 
 The configuration template is used only for new state.
-Existing configuration is preserved.
+Later starts preserve the saved configuration.
 The user-requested WSL memory cap remains 2 GB.
 
 ## Use the backend
@@ -106,7 +106,7 @@ curl -N --json "{\"requestId\":\"$REQUEST_ID\",\"text\":\"Reply with a short gre
 
 Each valid message uses paid model credit.
 Use a fresh request ID for each intended message. Never retry a POST automatically.
-The stream emits `accepted`, visible `message` snapshots, and one terminal event.
+The stream emits `accepted`, visible `message` snapshots, `activity` snapshots, and one terminal event.
 Replace displayed text with each snapshot. Do not append it.
 A closed stream without a terminal event has an unknown outcome.
 Read history before sending another message.
@@ -129,6 +129,21 @@ Use `localhost` in these examples. Host and Origin checks reject other origins b
 Set `APP_ORIGIN` for the intended application origin.
 Set `DEV_ORIGIN` to one exact origin when using the Vite development server.
 Do not expose this trusted single-user service publicly.
+
+## Tool activity and recovery
+
+Expand an Activity row to see the tool name, safe file target, and result summary.
+Each tool call has its own outcome. Failed calls remain visible after a later success.
+Saved history restores activity. Raw tool output, credentials, and private reasoning are omitted.
+
+Use OpenClaw's native agent loop and provider recovery. Tool errors return to the model, which can correct its next call.
+Eligible provider failures use native recovery. The application does not repeat message POST requests.
+The model can stop before a correction succeeds.
+Existing tool permissions and run deadlines still apply.
+See the official [agent loop](https://docs.openclaw.ai/concepts/agent-loop) and [retry policy](https://docs.openclaw.ai/concepts/retry).
+
+The selected model still has unresolved tool-call failures. Real patch correction remains unverified.
+See the [verification record](docs/verification.md#tool-activity-verification--2026-10-16) and [findings](docs/findings.md).
 
 ## Local code checks
 

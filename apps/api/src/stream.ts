@@ -25,10 +25,13 @@ export function streamReply(c: ApiContext, run: Submission) {
     let closed = false;
     let wake: (() => void) | undefined;
     let pending: StreamEvent | undefined;
+    let activity: StreamEvent | undefined;
     let terminal: StreamEvent | undefined;
 
     const detach = run.observe((event) => {
-      if (event.event === "message") pending = event;
+      if (event.event === "activity") activity = event;
+      else if (event.event === "message") pending = event;
+      else if (event.event === "accepted") return;
       else terminal ??= event;
 
       wake?.();
@@ -69,6 +72,14 @@ export function streamReply(c: ApiContext, run: Submission) {
       });
 
       while (!closed) {
+        // Activity events are full bounded snapshots. Coalescing retains every attempt.
+        if (activity) {
+          const update = activity;
+          activity = undefined;
+          await write(update);
+          continue;
+        }
+
         if (terminal) {
           await write(terminal);
           break;
@@ -87,7 +98,7 @@ export function streamReply(c: ApiContext, run: Submission) {
         });
         wake = undefined;
 
-        if (!closed && !pending && !terminal) {
+        if (!closed && !pending && !activity && !terminal) {
           await boundedWrite(stream.write(": keep-alive\n\n"));
         }
       }

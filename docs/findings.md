@@ -333,3 +333,4 @@ Sources:
 
 - [Official client capabilities](https://docs.openclaw.ai/gateway/protocol/handshake#client-capabilities)
 - [Official event streams and text projections](https://docs.openclaw.ai/gateway/protocol/rpc-bootstrap-and-events)
+

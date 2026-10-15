@@ -1,6 +1,6 @@
 import type { StreamEvent } from "./types.ts";
 
-const names = new Set(["accepted", "message", "completed", "cancelled", "failed"]);
+const names = new Set(["accepted", "message", "activity", "completed", "cancelled", "failed"]);
 
 export async function readEvents(
   body: ReadableStream<Uint8Array>,
@@ -29,6 +29,22 @@ export async function readEvents(
           (payload.text !== undefined && typeof payload.text !== "string")
         )
           throw new Error("Invalid stream event.");
+
+        if (
+          payload.activities !== undefined &&
+          (!Array.isArray(payload.activities) ||
+            payload.activities.length > 128 ||
+            payload.activities.some(
+              (item) =>
+                !item ||
+                typeof item.id !== "string" ||
+                typeof item.name !== "string" ||
+                !["requested", "running", "completed", "failed", "unknown"].includes(item.status) ||
+                (item.target !== undefined && typeof item.target !== "string") ||
+                (item.detail !== undefined && typeof item.detail !== "string"),
+            ))
+        )
+          throw new Error("Invalid tool activity.");
 
         receive({ event: event as StreamEvent["event"], data: payload });
         finished = event === "completed" || event === "cancelled" || event === "failed";

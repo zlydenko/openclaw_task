@@ -90,6 +90,11 @@ export class RunController {
 
     if (!turn.runId) throw new Error("Response arrived before acknowledgement.");
 
+    if (event === "activity") {
+      this.update({ activities: data.activities ?? [] });
+      return;
+    }
+
     if (event === "message") {
       this.update({
         text: data.text ?? "",
@@ -100,6 +105,7 @@ export class RunController {
 
     this.update({
       text: data.text ?? turn.text,
+      activities: data.activities ?? turn.activities,
       phase: event === "failed" ? (data.outcomeUnknown ? "checking" : "failed") : event,
       notice:
         event === "failed" ? (data.message ?? "The agent could not complete this response.") : "",

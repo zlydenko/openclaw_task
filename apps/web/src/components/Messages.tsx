@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { Activity } from "./Activity.tsx";
 import type { MessagesProps } from "../types.ts";
 
 export function Messages({ messages, loading, hasMore, more }: MessagesProps) {
@@ -55,7 +56,8 @@ export function Messages({ messages, loading, hasMore, more }: MessagesProps) {
                 {message.pending && <small>Pending</small>}
                 {message.rejected && <small>Not sent</small>}
               </div>
-              <div className="message-text">{message.text}</div>
+              {message.text && <div className="message-text">{message.text}</div>}
+              {!!message.activities?.length && <Activity activities={message.activities} />}
               {message.unsupported && (
                 <p className="content-note">Some content cannot be displayed in this text chat.</p>
               )}

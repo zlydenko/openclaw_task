@@ -17,4 +17,5 @@ if [[ ! -e /home/node/.openclaw/openclaw.json ]]; then
   cp /etc/assessment/openclaw.json /home/node/.openclaw/openclaw.json
   chmod 600 /home/node/.openclaw/openclaw.json
 fi
+
 exec node dist/index.js "$@"

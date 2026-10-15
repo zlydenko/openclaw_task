@@ -8,8 +8,8 @@ Use the existing [Hono API](backend-prd.md) and [assessment requirements](requir
 Let one local user create conversations, read history, and talk to the OpenClaw agent.
 Show real response text as it arrives. Use React, TypeScript, Vite, and plain CSS in `apps/web`.
 Include cancellation, connection status, and light/dark themes.
-Defer accounts, instance selection, attachments, search, rename, deletion, Markdown rendering, and tool display.
-Agent tool permissions remain a gateway concern.
+Defer accounts, instance selection, attachments, search, rename, deletion, Markdown rendering.
+Agent tool permissions remain a gateway concern. Include the tool activity behavior below.
 
 ## Layout and appearance
 
@@ -91,6 +91,17 @@ History can prove that a run ended without proving its final outcome. Preserve t
 Poll recovery about every three seconds, one request at a time, with slower retries after errors.
 Pause background polling in hidden tabs and refresh on return. Ignore stale reads after navigation or newer events.
 Show safe errors for 400, 404, 409, 413, and 503 responses. Retain submission details during recovery.
+
+## Tool activity
+
+Show an expandable Activity list within the assistant turn.
+Show tool names, safe targets, and explicit outcomes. Do not infer success from the end of an agent run.
+Show each actual tool call and its outcome. Keep failed calls visible after a later success.
+Use full activity snapshots from SSE. Keep observation independent of the selected conversation.
+Restore activity from saved history and merge calls and results across loaded pages.
+Hide empty reasoning-only rows. Known tool blocks must not produce an unsupported-content notice.
+Render safe summaries as plain text. Do not expose raw arguments, output, or private reasoning.
+OpenClaw owns native recovery. The interface only observes its results.
 
 ## Implementation boundaries
 

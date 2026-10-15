@@ -42,6 +42,7 @@ export class Chat {
       if (this.runs.active) void this.recover();
     });
     gateway.onEvent((event) => this.runs.receive(event));
+    gateway.onTool((event) => this.runs.receiveTool(event));
 
     this.reconcileTimer = setInterval(() => {
       const run = this.runs.active;
