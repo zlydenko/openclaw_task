@@ -6,6 +6,7 @@ import { conversationId, visibleMessage } from "../gateway/messages.ts";
 import type { OpenClaw } from "../openclaw.ts";
 import type {
   ChatEvent,
+  ImageAttachment,
   JsonRecord,
   Run,
   RunLifecycle,
@@ -24,11 +25,11 @@ export class RunTracker {
     private lifecycle: RunLifecycle,
   ) {}
 
-  checkSubmission(id: string, requestId: string, message: string) {
+  checkSubmission(id: string, requestId: string, message: string, attachments?: ImageAttachment[]) {
     this.prune();
 
     const hash = createHash("sha256")
-      .update(id + "\0" + message)
+      .update(JSON.stringify([id, message, attachments ?? []]))
       .digest("hex");
     const previous = this.requests.get(requestId);
 
@@ -38,7 +39,7 @@ export class RunTracker {
         previous.hash === hash ? "DUPLICATE_REQUEST" : "REQUEST_ID_REUSED",
         previous.hash === hash
           ? "This request was already submitted. Read history."
-          : "Use a new request ID for different text.",
+          : "Use a new request ID for different message content.",
         { runId: previous.runId },
       );
     }

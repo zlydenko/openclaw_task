@@ -14,7 +14,7 @@ Keep OpenRouter and `moonshotai/kimi-k2-thinking` configured in the gateway.
 The backend must not call OpenRouter directly.
 
 Include conversation creation, a conversation list, history, streamed answers, cancellation, and health.
-Include safe tool activity. Defer accounts, attachments, model selection, approval interfaces, and public hosting.
+Include safe tool activity and image attachments. Defer accounts, general file uploads, model selection, approval interfaces, and public hosting.
 The agent can still use tools permitted by its gateway configuration.
 Tool display and tool execution are separate concerns.
 
@@ -47,11 +47,11 @@ Return JSON except for a successful message submission.
 | POST /api/conversations | 201 with `{ id }` for a new empty conversation |
 | GET /api/conversations | 200 with `{ items, nextCursor }` |
 | GET /api/conversations/:id | 200 with `{ id, messages, nextCursor, activeRun, syncState }` |
-| POST /api/conversations/:id/messages | JSON body `{ requestId, text }`; 200 SSE after gateway acceptance |
+| POST /api/conversations/:id/messages | JSON body `{ requestId, text, attachments? }`; 200 SSE after gateway acceptance |
 | POST /api/conversations/:id/runs/:runId/cancel | 202 after the gateway accepts cancellation; this does not prove that the run stopped |
 
 A list item contains `id`, an available title, and an available update time.
-A history message contains a stable display ID, role, and visible text.
+A history message contains a stable display ID, role, visible text, and available image filenames.
 A tool activity row contains bounded call IDs, tool name, safe target, and outcome.
 Join calls and results by ID, including across loaded pages. An unavailable result has an unknown outcome.
 Mark other unsupported content. Do not return reasoning or raw tool arguments and outputs.
@@ -101,7 +101,7 @@ Do not create artificial chunks from an already completed answer.
 Require a client-generated UUID `requestId` and use it as the gateway idempotency key.
 Remember the request and its content hash before submission.
 For a repeated request ID, return 409 with the known run ID when available.
-Reject reuse with different text.
+Reject reuse with different text, attachment bytes, order, or filenames.
 Retain at most 1000 completed requests for one hour. Never evict unresolved requests.
 Gateway deduplication has release-specific limits; permanent exactly-once execution across restarts is outside this scope.
 
@@ -137,7 +137,13 @@ Check Host and Origin for browser requests that change state.
 Require JSON for those requests and reject unknown input fields.
 Do not treat CORS alone as authorization.
 
-Limit a request body to 16 KiB and message text to 8 KiB of UTF-8.
+Limit ordinary request bodies to 16 KiB and message text to 8 KiB of UTF-8.
+The message route permits four images and 5 MiB total decoded bytes, plus bounded base64 and JSON overhead.
+Accept PNG, JPEG, WebP, and GIF. Require canonical base64 and safe filenames.
+Validate signatures before submission. OpenClaw performs full image preparation.
+Permit blank text only when images are present.
+Use official chat.send attachments with type, mimeType, fileName, and content.
+Keep storage in OpenClaw. History returns filenames, without image bytes or local media paths.
 Limit a visible answer to 64 KiB.
 If that limit is exceeded, stop buffering, report the limit, and request cancellation.
 Keep the run slot reserved until the gateway confirms the outcome.

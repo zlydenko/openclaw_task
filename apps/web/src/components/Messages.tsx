@@ -57,9 +57,22 @@ export function Messages({ messages, loading, hasMore, more }: MessagesProps) {
                 {message.rejected && <small>Not sent</small>}
               </div>
               {message.text && <div className="message-text">{message.text}</div>}
+              {!!message.images?.length && (
+                <div className="message-images">
+                  {message.images.map((image, index) => (
+                    <figure key={index}>
+                      {image.url && <img src={image.url} alt={image.fileName} loading="lazy" />}
+                      <figcaption>
+                        <span aria-hidden="true">▧ </span>
+                        {image.fileName}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              )}
               {!!message.activities?.length && <Activity activities={message.activities} />}
               {message.unsupported && (
-                <p className="content-note">Some content cannot be displayed in this text chat.</p>
+                <p className="content-note">Some content cannot be displayed in this chat.</p>
               )}
               {message.truncated && (
                 <p className="content-note">This message is shortened by the display limit.</p>

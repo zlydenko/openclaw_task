@@ -1,4 +1,5 @@
 import { groupActivityRows } from "./activity.ts";
+import { imageUrl } from "./images.ts";
 import type { ChatState, History, Message, Phase, Turn } from "./types.ts";
 
 export const isBusy = (phase?: Phase) =>
@@ -20,6 +21,9 @@ export const initialState = (): ChatState => ({
   loading: {},
   errors: {},
   drafts: {},
+  attachments: {},
+  imageLoading: {},
+  imageErrors: {},
   turns: {},
 });
 
@@ -30,12 +34,16 @@ export function mergeById<T extends { id: string }>(items: T[], more: T[]) {
 export function visibleMessages(history?: History, turn?: Turn): Message[] {
   const messages = groupActivityRows(history?.messages ?? []);
 
-  if (!turn || !turn.input) return messages;
+  if (!turn || (!turn.input && !turn.attachments?.length)) return messages;
 
   const newUser = messages.findIndex(
     (message) =>
       message.role === "user" &&
       message.text.trim() === turn.input.trim() &&
+      (message.images?.length ?? 0) === (turn.attachments?.length ?? 0) &&
+      (message.images ?? []).every(
+        (image, index) => image.fileName === turn.attachments?.[index]?.fileName,
+      ) &&
       !turn.baselineIds.includes(message.id),
   );
   const assistant = newUser >= 0 && messages[newUser + 1]?.role === "assistant";
@@ -50,6 +58,10 @@ export function visibleMessages(history?: History, turn?: Turn): Message[] {
       id: "user-" + turn.requestId,
       role: "user",
       text: turn.input,
+      images: turn.attachments?.map((image) => ({
+        fileName: image.fileName,
+        url: imageUrl(image),
+      })),
       pending: turn.phase === "sending",
       rejected: turn.phase === "failed" && !turn.runId,
     },

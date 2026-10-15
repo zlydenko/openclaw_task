@@ -19,8 +19,8 @@ export function createChatController(chat: Chat): ChatController {
     history: async (c) => c.json(await chat.history(c.var.conversationId, c.var.page)),
 
     send: async (c) => {
-      const { requestId, text } = c.var.messageInput;
-      const run = await chat.send(c.var.conversationId, requestId, text);
+      const { requestId, text, attachments } = c.var.messageInput;
+      const run = await chat.send(c.var.conversationId, requestId, text, attachments);
 
       return streamReply(c, run);
     },

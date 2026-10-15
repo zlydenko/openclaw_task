@@ -1,5 +1,5 @@
 import { readEvents } from "./events.ts";
-import type { Conversation, History, Page, StreamEvent } from "./types.ts";
+import type { Conversation, History, ImageAttachment, Page, StreamEvent } from "./types.ts";
 
 export class ApiError extends Error {
   constructor(
@@ -66,12 +66,26 @@ export const api = {
     text: string,
     receive: (event: StreamEvent) => void,
     signal: AbortSignal,
+    attachments: ImageAttachment[] = [],
   ) => {
     const response = await check(
       await fetch(conversation(id) + "/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-        body: JSON.stringify({ requestId, text }),
+        body: JSON.stringify({
+          requestId,
+          text,
+          ...(attachments.length
+            ? {
+                attachments: attachments.map(({ type, mimeType, fileName, content }) => ({
+                  type,
+                  mimeType,
+                  fileName,
+                  content,
+                })),
+              }
+            : {}),
+        }),
         signal,
       }),
     );

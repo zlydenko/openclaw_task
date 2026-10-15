@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { toolDetail, toolTarget, toolIdentifier, toolOutcome } from "./activity.ts";
-import type { ChatEvent, ToolActivity, ProjectedMessage } from "../types.ts";
+import type { ChatEvent, ToolActivity, ProjectedMessage, MessageImage } from "../types.ts";
 import { record, text } from "../validation.ts";
 
 export const namespace = "agent:main:dashboard:assessment-api-";
@@ -43,8 +43,13 @@ export function visibleMessage(value: unknown) {
 
             if (block.type === "text") return [text(block.text)];
 
+            if (block.type === "attachment" && record(block.attachment).kind === "image") return [];
+
             if (
               ![
+                "image",
+                "input_image",
+                "image_url",
                 "thinking",
                 "reasoning",
                 "toolCall",
@@ -60,6 +65,31 @@ export function visibleMessage(value: unknown) {
           .join("");
 
   return { text: content, unsupported };
+}
+
+function messageImages(row: unknown): MessageImage[] {
+  const message = record(row);
+  const content = Array.isArray(message.content) ? message.content : [];
+  const facts = record(message.__openclaw).media;
+  // Native media facts keep original filenames even when inline blocks omit them.
+  const saved = (Array.isArray(facts) ? facts : []).flatMap((item) => {
+    const fact = record(item);
+    return fact.kind === "image" || text(fact.contentType).startsWith("image/")
+      ? [{ fileName: text(fact.fileName).slice(0, 200) || "Attached image" }]
+      : [];
+  });
+  if (saved.length) return saved.slice(0, 4);
+
+  const images = content.flatMap((item) => {
+    const block = record(item);
+    if (["image", "input_image", "image_url"].includes(text(block.type)))
+      return [{ fileName: text(block.fileName).slice(0, 200) || "Attached image" }];
+    const attachment = record(block.attachment);
+    return block.type === "attachment" && attachment.kind === "image"
+      ? [{ fileName: text(attachment.label).slice(0, 200) || "Attached image" }]
+      : [];
+  });
+  return images.slice(0, 4);
 }
 
 export function projectMessages(messages: unknown[]) {
@@ -109,15 +139,28 @@ export function projectMessages(messages: unknown[]) {
     if (row.role !== "user" && row.role !== "assistant") continue;
 
     const visible = visibleMessage(row);
+    const images = messageImages(row);
     const meta = record(row.__openclaw);
     const base =
       text(meta.id) ||
       text(row.id) ||
       createHash("sha256")
-        .update(JSON.stringify([row.role, row.timestamp, visible.text]))
+        .update(
+          JSON.stringify([
+            row.role,
+            row.timestamp,
+            visible.text,
+            record(row.__openclaw).media,
+            images,
+          ]),
+        )
         .digest("hex");
     const sibling = occurrences.get(base) ?? 0;
     occurrences.set(base, sibling + 1);
+
+    const imageBytes = Buffer.byteLength(JSON.stringify(images));
+    const displayImages = imageBytes <= budget ? images : [];
+    budget = Math.max(0, budget - imageBytes);
 
     const bytes = Buffer.from(visible.text);
     const cap = Math.min(64 * 1024, Math.floor(budget / 6));
@@ -128,14 +171,15 @@ export function projectMessages(messages: unknown[]) {
 
     budget = Math.max(0, budget - Buffer.byteLength(JSON.stringify(clipped)));
 
-    if (clipped || visible.unsupported || row.role === "user") {
+    if (clipped || images.length || visible.unsupported || row.role === "user") {
       const id = `${base}:${row.role}:${sibling}`;
       projected.set(id, {
         id,
         role: row.role,
         text: clipped,
         unsupported: visible.unsupported,
-        truncated: bytes.length > cap,
+        ...(displayImages.length ? { images: displayImages } : {}),
+        truncated: bytes.length > cap || images.length > displayImages.length,
       });
     }
 

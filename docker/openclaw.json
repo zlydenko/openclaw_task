@@ -54,6 +54,24 @@
             ],
             "contextWindow": 262144,
             "maxTokens": 4096
+          },
+          {
+            "id": "google/gemini-2.5-flash-lite",
+            "name": "Gemini 2.5 Flash-Lite",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "contextWindow": 1048576,
+            "maxTokens": 4096,
+            "cost": {
+              "input": 0.1,
+              "output": 0.4,
+              "cacheRead": 0.01,
+              "cacheWrite": 0.08333
+            }
           }
         ]
       }
@@ -69,7 +87,10 @@
       "heartbeat": {
         "every": "0m"
       },
-      "timeoutSeconds": 180
+      "timeoutSeconds": 180,
+      "imageModel": {
+        "primary": "openrouter/google/gemini-2.5-flash-lite"
+      }
     },
     "entries": {
       "main": {

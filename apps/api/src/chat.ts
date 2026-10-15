@@ -5,7 +5,7 @@ import { recoverGateway } from "./chat/recovery.ts";
 import { RunTracker } from "./chat/runs.ts";
 import { ApiError } from "./errors.ts";
 import type { OpenClaw } from "./openclaw.ts";
-import type { Page, Submission } from "./types.ts";
+import type { ImageAttachment, Page, Submission } from "./types.ts";
 
 export class Chat {
   readonly owner = "local";
@@ -114,8 +114,13 @@ export class Chat {
     };
   }
 
-  async send(id: string, requestId: string, message: string): Promise<Submission> {
-    const hash = this.runs.checkSubmission(id, requestId, message);
+  async send(
+    id: string,
+    requestId: string,
+    message: string,
+    attachments?: ImageAttachment[],
+  ): Promise<Submission> {
+    const hash = this.runs.checkSubmission(id, requestId, message, attachments);
 
     this.requireReady();
 
@@ -126,9 +131,15 @@ export class Chat {
       await this.conversations.known(id);
       await this.gateway.subscribe(id);
 
-      const result = await this.gateway.send(id, requestId, message, () => {
-        run.sent = true;
-      });
+      const result = await this.gateway.send(
+        id,
+        requestId,
+        message,
+        () => {
+          run.sent = true;
+        },
+        attachments,
+      );
 
       if (!result.runId) throw new Error("Missing acknowledgement");
 

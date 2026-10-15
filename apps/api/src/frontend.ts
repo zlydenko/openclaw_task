@@ -10,7 +10,7 @@ export function registerFrontend(app: ApiApp, root: string) {
   app.use("*", async (c, next) => {
     c.header(
       "Content-Security-Policy",
-      "default-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+      "default-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
     );
     c.header("Referrer-Policy", "no-referrer");
 

@@ -8,7 +8,7 @@ Use the existing [Hono API](backend-prd.md) and [assessment requirements](requir
 Let one local user create conversations, read history, and talk to the OpenClaw agent.
 Show real response text as it arrives. Use React, TypeScript, Vite, and plain CSS in `apps/web`.
 Include cancellation, connection status, and light/dark themes.
-Defer accounts, instance selection, attachments, search, rename, deletion, Markdown rendering.
+Defer accounts, instance selection, general file uploads, search, rename, deletion, Markdown rendering.
 Agent tool permissions remain a gateway concern. Include the tool activity behavior below.
 
 ## Layout and appearance
@@ -37,7 +37,12 @@ Select the returned ID and focus the composer. Store selection in the URL hash f
 Handle missing conversations gracefully. Explain that empty conversations can disappear after a backend restart.
 
 Use multiline input: Enter sends; Shift+Enter adds a line break. Do not send during input method composition.
-Reject blank text and text above 8 KiB of UTF-8. Keep drafts after failed submissions.
+Reject blank text without images and text above 8 KiB of UTF-8. Keep drafts after rejected submissions.
+Provide an image picker and clipboard paste. Show thumbnails and a Remove control.
+Permit PNG, JPEG, WebP, and GIF. Limit each message to four images and 5 MiB total.
+Send images with text or on their own. Retain image drafts per conversation in memory.
+Disable sending during image reads. Clear only accepted images, preserving newer draft images.
+Saved history shows image filenames. Current-turn previews use local image bytes.
 Generate one UUID request ID per explicit send. Mark outgoing text pending until acceptance.
 Reconcile pending messages with history without duplication. Do not submit from a React effect.
 
@@ -70,7 +75,7 @@ Use relative URLs and browser `fetch`. Follow the backend PRD for bodies, limits
 | GET /api/conversations | Conversation pages |
 | POST /api/conversations | Create a conversation with an empty JSON object |
 | GET /api/conversations/:id | History, `activeRun`, and `syncState` |
-| POST /api/conversations/:id/messages | Submit `{ requestId, text }` and read the SSE response |
+| POST /api/conversations/:id/messages | Submit `{ requestId, text, attachments? }` and read the SSE response |
 | POST /api/conversations/:id/runs/:runId/cancel | Request cancellation with an empty JSON object |
 
 Read SSE across arbitrary network chunk boundaries and ignore comment heartbeats.

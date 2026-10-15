@@ -36,7 +36,7 @@ Do not claim unattended fresh setup if manual pairing remains necessary.
 | Device authentication     | Investigate first because secure connection behavior can require it |
 | Tool-call display         | First optional feature after required behavior passes               |
 | Configuration generator   | Deferred                                                            |
-| Image or file attachments | Deferred                                                            |
+| Image or file attachments | Images implemented; general file uploads deferred                                                            |
 
 Tool-call display includes the name, status, input parameters, and output.
 Support running, completed, and error states if this feature is selected.

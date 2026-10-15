@@ -11,7 +11,15 @@ import { readToolEvent } from "./gateway/activity.ts";
 import { loadGatewayDevice } from "./gateway/device.ts";
 import { conversationId, legacyNamespace, readChatEvent, sessionKey } from "./gateway/messages.ts";
 import { record } from "./validation.ts";
-import type { ChatListener, History, Listener, Roster, SendResult, ToolListener } from "./types.ts";
+import type {
+  ChatListener,
+  History,
+  ImageAttachment,
+  Listener,
+  Roster,
+  SendResult,
+  ToolListener,
+} from "./types.ts";
 
 export class OpenClaw {
   private client: GatewayClient;
@@ -213,12 +221,19 @@ export class OpenClaw {
     });
   }
 
-  send(id: string, requestId: string, message: string, onSent: Listener) {
+  send(
+    id: string,
+    requestId: string,
+    message: string,
+    onSent: Listener,
+    attachments?: ImageAttachment[],
+  ) {
     return this.client.request<SendResult>(
       "chat.send",
       {
         sessionKey: this.key(id),
         message,
+        ...(attachments?.length ? { attachments } : {}),
         idempotencyKey: requestId,
         timeoutMs: 180_000,
         deliver: false,

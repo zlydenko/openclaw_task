@@ -190,6 +190,11 @@ export function App() {
               <Composer
                 key={id}
                 draft={state.drafts[id] ?? ""}
+                attachments={state.attachments[id] ?? []}
+                imageLoading={!!state.imageLoading[id]}
+                imageError={state.imageErrors[id] ?? ""}
+                attach={(files) => void chat.attach(id, files)}
+                remove={(imageId) => chat.removeImage(id, imageId)}
                 change={(text) => chat.draft(id, text)}
                 send={() => void chat.send()}
                 stop={() => void chat.cancel()}

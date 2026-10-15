@@ -6,11 +6,21 @@ export type ToolActivity = {
   detail?: string;
 };
 
+export type ImageAttachment = {
+  id: string;
+  type: "image";
+  mimeType: string;
+  fileName: string;
+  content: string;
+};
+export type MessageImage = { fileName: string; url?: string };
+
 export type Conversation = { id: string; title?: string; updatedAt?: number };
 export type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  images?: MessageImage[];
   activities?: ToolActivity[];
   unsupported?: boolean;
   truncated?: boolean;
@@ -61,6 +71,7 @@ export type Turn = {
   phase: Phase;
   notice: string;
   baselineIds: string[];
+  attachments?: ImageAttachment[];
   activities?: ToolActivity[];
 };
 
@@ -77,12 +88,15 @@ export type ChatState = {
   loading: Record<string, boolean>;
   errors: Record<string, string>;
   drafts: Record<string, string>;
+  attachments: Record<string, ImageAttachment[]>;
+  imageLoading: Record<string, boolean>;
+  imageErrors: Record<string, string>;
   turns: Record<string, Turn>;
 };
 
 export type RunCallbacks = {
   change: (turn: Turn) => void;
-  accepted: (id: string, input: string) => void;
+  accepted: (id: string, input: string, attachments: ImageAttachment[]) => void;
   settled: (id: string) => void;
 };
 
@@ -107,6 +121,11 @@ export type MessagesProps = {
 
 export type ComposerProps = {
   draft: string;
+  attachments: ImageAttachment[];
+  imageLoading: boolean;
+  imageError: string;
+  attach: (files: File[]) => void;
+  remove: (id: string) => void;
   change: (text: string) => void;
   send: () => void;
   stop: () => void;

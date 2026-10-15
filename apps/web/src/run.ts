@@ -1,6 +1,6 @@
 import { api, ApiError } from "./api.ts";
 import { isBusy } from "./state.ts";
-import type { History, RunCallbacks, StreamEvent, Turn } from "./types.ts";
+import type { History, ImageAttachment, RunCallbacks, StreamEvent, Turn } from "./types.ts";
 
 export class RunController {
   current: Turn | null = null;
@@ -18,7 +18,12 @@ export class RunController {
     this.callbacks.change(this.current);
   }
 
-  async send(id: string, input: string, baselineIds: string[]) {
+  async send(
+    id: string,
+    input: string,
+    baselineIds: string[],
+    attachments: ImageAttachment[] = [],
+  ) {
     if (this.streaming || isBusy(this.current?.phase)) return;
 
     this.current = {
@@ -30,6 +35,7 @@ export class RunController {
       phase: "sending",
       notice: "",
       baselineIds,
+      attachments,
     };
     this.abort = new AbortController();
     this.streaming = true;
@@ -42,6 +48,7 @@ export class RunController {
         input,
         (event) => this.receive(event),
         AbortSignal.any([this.abort.signal, AbortSignal.timeout(215_000)]),
+        attachments,
       );
 
       if (isBusy(this.current.phase)) {
@@ -84,7 +91,7 @@ export class RunController {
       if (!data.runId) throw new Error("Missing run acknowledgement.");
 
       this.update({ runId: data.runId, phase: "thinking" });
-      this.callbacks.accepted(turn.conversationId, turn.input);
+      this.callbacks.accepted(turn.conversationId, turn.input, turn.attachments ?? []);
       return;
     }
 

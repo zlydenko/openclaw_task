@@ -132,6 +132,50 @@ Set `APP_ORIGIN` for the intended application origin.
 Set `DEV_ORIGIN` to one exact origin when using the Vite development server.
 Do not expose this trusted single-user service publicly.
 
+## Image attachments
+
+Select **+ Images** or paste an image into the message box.
+Review the thumbnails. Use × to remove an image before sending.
+Send images with text or on their own.
+PNG, JPEG, WebP, and GIF are supported. The limit is four images and 5 MiB in total.
+Draft images stay with their conversation in memory. Rejected sends retain the draft.
+A page reload discards unsent drafts. The app never retries message POST requests automatically.
+
+Hono forwards base64 attachments through the official `chat.send.attachments` field.
+OpenClaw validates and stores the images in its private gateway state.
+Saved history shows attachment filenames. Draft and current-turn previews use local image bytes.
+No separate upload service, file database, host mount, or new dependency is used.
+
+Kimi K2 Thinking accepts text. OpenClaw's native `image` tool uses
+`openrouter/google/gemini-2.5-flash-lite` for image analysis.
+The image model uses OpenRouter chat completions. Kimi keeps its Responses API configuration.
+The image tool uses the existing provider SecretRef. It makes additional paid requests when called.
+On 2026-10-16, OpenRouter listed $0.10 per million input tokens and $0.40 per million output tokens.
+Image input uses the listed input rate. The image model definition and native tool use a 4096-token output limit.
+Native naming and the chat turn can have separate costs.
+No paid image recognition check has been run for this change. Existing Kimi tool-call limitations still apply.
+
+New gateway state receives the image model from `docker/openclaw.json`.
+Existing state keeps its saved configuration. For an existing installation, inspect the current model list:
+
+```bash
+docker compose exec openclaw-gateway node dist/index.js config get models.providers.openrouter.models
+```
+
+Add the Gemini definition from `docker/openclaw.json` at the next unused model-list index with
+`openclaw config set models.providers.openrouter.models[N] '<definition>' --strict-json`.
+Retain existing models. Then select and validate it through the official CLI:
+
+```bash
+docker compose exec openclaw-gateway node dist/index.js models set-image openrouter/google/gemini-2.5-flash-lite
+docker compose exec openclaw-gateway node dist/index.js config validate
+```
+
+The local saved configuration was updated through these official commands for this change.
+See the official [attachment payload example](https://github.com/openclaw/openclaw/blob/v2026.10.3/ui/src/pages/chat/attachment-api.ts),
+[native image configuration](https://docs.openclaw.ai/gateway/config-agents/models), and
+[OpenRouter model details](https://openrouter.ai/google/gemini-2.5-flash-lite).
+
 ## Conversation names
 
 Conversations show a short title from their saved first user message when a useful name is unavailable.

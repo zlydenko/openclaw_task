@@ -111,10 +111,18 @@ it("uses native naming keys and preserves legacy history, sends, subscriptions, 
     const { id } = chat.create();
     const before = await (await get("/api/conversations")).json();
     expect(before.items.find((item: { id: string }) => item.id === id)).not.toHaveProperty("title");
-    await chat.send(id, "new-request", "Help me plan a garden.");
+    const attachments = [
+      {
+        type: "image" as const,
+        mimeType: "image/png" as const,
+        fileName: "garden.png",
+        content: "iVBORw0KGgo=",
+      },
+    ];
+    await chat.send(id, "new-request", "Help me plan a garden.", attachments);
     expect(request).toHaveBeenCalledWith(
       "chat.send",
-      expect.objectContaining({ sessionKey: sessionKey(id) }),
+      expect.objectContaining({ sessionKey: sessionKey(id), attachments }),
       expect.any(Object),
     );
     expect(sessionKey(id)).toBe("agent:main:dashboard:assessment-api-" + id);

@@ -175,3 +175,20 @@ Count separate title-generation attempts in the paid budget, including the gatew
 - The running API returned nonempty titles for all 12 saved conversations. Repeated list reads returned the same result. An API restart preserved all 12 titles and restored authenticated readiness.
 - No valid chat submission, title-generation request, paid backfill, or message replay was used for these checks.
 - These fallback titles are deterministic user-text excerpts. Successful native AI title generation remains unverified; the observed native request exhausted its attempts.
+
+## Image attachment checks — 2026-10-16
+
+- TypeScript, Oxlint, Oxfmt, the production build, and 28 Vitest checks passed.
+- Attachment checks cover image-only sends, official adapter forwarding, count and size limits, invalid MIME and base64, image signatures, attachment-aware request identity, retained drafts, navigation isolation, saved labels, and unknown-outcome blocking without another POST.
+- History text and image labels share the existing response budget. No image bytes or gateway media paths are returned in history.
+- Compose validation, image builds, service startup, gateway configuration validation, and authenticated backend readiness passed. The saved device identity and gateway volumes were retained.
+- The official CLI selected OpenRouter Gemini 2.5 Flash-Lite as the image model. Native model listing reports text+image input and configured authentication. Kimi remains the default chat model.
+- Browser checks covered image selection, clipboard image paste, loaded thumbnails, removal, image-only send availability, an invalid-file error, and four-image wrapping at a 444 × 884 viewport. The final 390 × 844 layout had no horizontal overflow. The 1024 × 768 desktop layout was inspected. No image was submitted to the model.
+- Running-container checks returned 400 for invalid images, blank input, unknown fields, and an untrusted Origin. Excessive text returned 413. Health, readiness, and conversation reads returned 200 after the final rebuild.
+- These results verify transport and configuration. Paid image recognition and Kimi's ability to complete an image-tool call remain unverified.
+
+For a separately approved paid check, attach one small PNG and ask what it shows.
+Allow one chat turn plus one native image-analysis call, and account for native naming costs.
+Check the image tool's actual outcome. Do not infer success from acceptance or configuration validation.
+Reload the conversation and check its saved attachment filename.
+If the run fails or its outcome is unknown, read history and record the result before another explicit send.

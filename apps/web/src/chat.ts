@@ -1,5 +1,6 @@
 import { mergeHistory } from "./activity.ts";
 import { api, ApiError } from "./api.ts";
+import { readImages } from "./images.ts";
 import { RunController } from "./run.ts";
 import { activeTurns, initialState, isBusy, mergeById } from "./state.ts";
 import type { ChatState } from "./types.ts";
@@ -23,8 +24,15 @@ export class ChatController {
 
     runner = new RunController({
       change: (turn) => this.update({ turns: { ...this.state.turns, [id]: turn } }),
-      accepted: (_id, input) => {
+      accepted: (_id, input, sentImages) => {
         if (this.state.drafts[id] === input) this.draft(id, "");
+        const sent = new Set(sentImages.map((image) => image.id));
+        this.update({
+          attachments: {
+            ...this.state.attachments,
+            [id]: (this.state.attachments[id] ?? []).filter((image) => !sent.has(image.id)),
+          },
+        });
       },
       settled: () => {
         void this.loadHistory(id);
@@ -57,6 +65,37 @@ export class ChatController {
 
   draft = (id: string, text: string) => {
     this.update({ drafts: { ...this.state.drafts, [id]: text } });
+  };
+
+  attach = async (id: string, files: File[]) => {
+    if (this.state.imageLoading[id] || !files.length) return;
+    this.update({
+      imageLoading: { ...this.state.imageLoading, [id]: true },
+      imageErrors: { ...this.state.imageErrors, [id]: "" },
+    });
+    try {
+      const images = await readImages(files, this.state.attachments[id] ?? []);
+      this.update({
+        attachments: {
+          ...this.state.attachments,
+          [id]: [...(this.state.attachments[id] ?? []), ...images],
+        },
+      });
+    } catch (error) {
+      this.update({ imageErrors: { ...this.state.imageErrors, [id]: errorText(error) } });
+    } finally {
+      this.update({ imageLoading: { ...this.state.imageLoading, [id]: false } });
+    }
+  };
+
+  removeImage = (id: string, imageId: string) => {
+    this.update({
+      attachments: {
+        ...this.state.attachments,
+        [id]: (this.state.attachments[id] ?? []).filter((image) => image.id !== imageId),
+      },
+      imageErrors: { ...this.state.imageErrors, [id]: "" },
+    });
   };
 
   create = async () => {
@@ -138,9 +177,12 @@ export class ChatController {
     const id = this.state.selected;
     const input = id ? (this.state.drafts[id] ?? "") : "";
 
+    const attachments = id ? (this.state.attachments[id] ?? []) : [];
+
     if (
       !id ||
-      !input.trim() ||
+      (!input.trim() && !attachments.length) ||
+      this.state.imageLoading[id] ||
       !this.state.ready ||
       this.state.loading[id] ||
       !this.state.views[id] ||
@@ -162,6 +204,7 @@ export class ChatController {
       id,
       input,
       this.state.views[id]!.messages.map((message) => message.id),
+      attachments,
     );
   };
 

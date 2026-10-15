@@ -6,7 +6,15 @@ export type Listener = () => void;
 export type ChatListener = (event: ChatEvent) => void;
 export type ToolListener = (event: ToolEvent) => void;
 
-export type MessageInput = { requestId: string; text: string };
+export type ImageAttachment = {
+  type: "image";
+  mimeType: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+  fileName: string;
+  content: string;
+};
+
+export type MessageInput = { requestId: string; text: string; attachments?: ImageAttachment[] };
+export type MessageImage = { fileName: string };
 export type Page = { limit: number; offset: number; emptyOffset: number };
 export type ApiStatus = 400 | 404 | 409 | 413 | 503;
 
@@ -133,4 +141,5 @@ export type ProjectedMessage = {
   unsupported?: boolean;
   truncated?: boolean;
   activities?: ToolActivity[];
+  images?: MessageImage[];
 };

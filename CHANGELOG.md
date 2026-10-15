@@ -3,6 +3,16 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Image attachments — 2026-10-15
+
+- Add an image picker, clipboard paste, thumbnails, and removal in the composer.
+- Send image-only messages or images with text through official OpenClaw chat.send attachments.
+- Limit images to four files and 5 MiB in total. Validate input before run admission.
+- Include attachments in request identity. Keep drafts and recovery isolated by conversation.
+- Show saved image filenames without returning image bytes in history responses.
+- Configure Gemini 2.5 Flash-Lite through OpenRouter for the native image tool. Keep Kimi for chat.
+- Add HTTP/SSE attachment checks. Make no paid image-analysis requests.
+
 ## Initial concurrency configuration — 2026-10-15
 
 - Keep the three-run gateway limit in the initial OpenClaw configuration.

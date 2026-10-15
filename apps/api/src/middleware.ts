@@ -4,6 +4,7 @@ import { createMiddleware } from "hono/factory";
 
 import { ApiError } from "./errors.ts";
 import { pageFrom } from "./pagination.ts";
+import { imageAttachments, MESSAGE_BODY_LIMIT } from "./images.ts";
 import { uuid } from "./validation.ts";
 import type { ApiContext, ApiEnv, JsonRecord } from "./types.ts";
 
@@ -42,12 +43,17 @@ export function requestBoundary(origin: string, developmentOrigin?: string) {
       allowMethods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     }),
-    bodyLimit({
-      maxSize: 16 * 1024,
-      onError: () => {
-        throw new ApiError(413, "BODY_LIMIT", "Request body must not exceed 16 KiB.");
-      },
-    }),
+    createMiddleware<ApiEnv>(async (c, next) =>
+      bodyLimit({
+        maxSize:
+          c.req.method === "POST" && /^\/api\/conversations\/[^/]+\/messages$/.test(c.req.path)
+            ? MESSAGE_BODY_LIMIT
+            : 16 * 1024,
+        onError: () => {
+          throw new ApiError(413, "BODY_LIMIT", "Request body exceeds the allowed size.");
+        },
+      })(c, next),
+    ),
   ];
 }
 
@@ -87,20 +93,27 @@ export const messageBody = createMiddleware<ApiEnv>(async (c, next) => {
   const body = c.var.body;
 
   if (
-    Object.keys(body).some((key) => key !== "requestId" && key !== "text") ||
+    Object.keys(body).some(
+      (key) => key !== "requestId" && key !== "text" && key !== "attachments",
+    ) ||
     typeof body.requestId !== "string" ||
     !uuid.test(body.requestId) ||
-    typeof body.text !== "string" ||
-    !body.text.trim()
+    typeof body.text !== "string"
   ) {
-    throw new ApiError(400, "INVALID_INPUT", "Use a UUID requestId and non-empty text.");
+    throw new ApiError(400, "INVALID_INPUT", "Use a UUID requestId and message text.");
   }
 
   if (Buffer.byteLength(body.text) > 8192) {
     throw new ApiError(413, "TEXT_LIMIT", "Message text must not exceed 8 KiB.");
   }
 
-  c.set("messageInput", { requestId: body.requestId.toLowerCase(), text: body.text });
+  const attachments = imageAttachments(body.attachments);
+
+  if (!body.text.trim() && !attachments?.length) {
+    throw new ApiError(400, "INVALID_INPUT", "Add message text or an image.");
+  }
+
+  c.set("messageInput", { requestId: body.requestId.toLowerCase(), text: body.text, attachments });
 
   await next();
 });
