@@ -7,6 +7,7 @@ import {
 import { readPairingConnectErrorDetails } from "@openclaw/gateway-protocol/connect-error-details";
 import { PROTOCOL_VERSION } from "@openclaw/gateway-protocol/version";
 
+import { readGatewayImage } from "./gateway/images.ts";
 import { readToolEvent } from "./gateway/activity.ts";
 import { loadGatewayDevice } from "./gateway/device.ts";
 import { conversationId, legacyNamespace, readChatEvent, sessionKey } from "./gateway/messages.ts";
@@ -15,6 +16,7 @@ import type {
   ChatListener,
   History,
   ImageAttachment,
+  MessageResult,
   Listener,
   Roster,
   SendResult,
@@ -23,6 +25,8 @@ import type {
 
 export class OpenClaw {
   private client: GatewayClient;
+  private mediaBase: URL;
+  private mediaToken: () => string;
   private epoch = 0;
   private stopped = false;
   private listeners = new Set<ChatListener>();
@@ -45,6 +49,10 @@ export class OpenClaw {
 
     if (parsed.username || parsed.password || parsed.search || parsed.hash)
       throw new Error("Invalid gateway URL");
+
+    this.mediaBase = new URL(parsed);
+    this.mediaBase.protocol = parsed.protocol === "wss:" ? "https:" : "http:";
+    this.mediaToken = () => device.token;
 
     this.client = new GatewayClient({
       url,
@@ -219,6 +227,18 @@ export class OpenClaw {
       maxBytes: 480 * 1024,
       ...(runId ? { inputRunIds: [runId] } : {}),
     });
+  }
+
+  message(id: string, messageId: string) {
+    return this.client.request<MessageResult>("chat.message.get", {
+      sessionKey: this.key(id),
+      messageId,
+      maxChars: 480 * 1024,
+    });
+  }
+
+  image(id: string, source: string) {
+    return readGatewayImage(this.mediaBase, this.mediaToken(), this.key(id), source);
   }
 
   send(

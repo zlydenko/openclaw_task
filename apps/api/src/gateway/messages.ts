@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 
+import { storedImages } from "./images.ts";
 import { toolDetail, toolTarget, toolIdentifier, toolOutcome } from "./activity.ts";
-import type { ChatEvent, ToolActivity, ProjectedMessage, MessageImage } from "../types.ts";
+import type { ChatEvent, ToolActivity, ProjectedMessage } from "../types.ts";
 import { record, text } from "../validation.ts";
 
 export const namespace = "agent:main:dashboard:assessment-api-";
@@ -67,32 +68,7 @@ export function visibleMessage(value: unknown) {
   return { text: content, unsupported };
 }
 
-function messageImages(row: unknown): MessageImage[] {
-  const message = record(row);
-  const content = Array.isArray(message.content) ? message.content : [];
-  const facts = record(message.__openclaw).media;
-  // Native media facts keep original filenames even when inline blocks omit them.
-  const saved = (Array.isArray(facts) ? facts : []).flatMap((item) => {
-    const fact = record(item);
-    return fact.kind === "image" || text(fact.contentType).startsWith("image/")
-      ? [{ fileName: text(fact.fileName).slice(0, 200) || "Attached image" }]
-      : [];
-  });
-  if (saved.length) return saved.slice(0, 4);
-
-  const images = content.flatMap((item) => {
-    const block = record(item);
-    if (["image", "input_image", "image_url"].includes(text(block.type)))
-      return [{ fileName: text(block.fileName).slice(0, 200) || "Attached image" }];
-    const attachment = record(block.attachment);
-    return block.type === "attachment" && attachment.kind === "image"
-      ? [{ fileName: text(attachment.label).slice(0, 200) || "Attached image" }]
-      : [];
-  });
-  return images.slice(0, 4);
-}
-
-export function projectMessages(messages: unknown[]) {
+export function projectMessages(messages: unknown[], conversationId?: string) {
   let budget = 320 * 1024;
   const occurrences = new Map<string, number>();
 
@@ -139,7 +115,21 @@ export function projectMessages(messages: unknown[]) {
     if (row.role !== "user" && row.role !== "assistant") continue;
 
     const visible = visibleMessage(row);
-    const images = messageImages(row);
+    const messageId = text(record(row.__openclaw).id) || text(row.id);
+    const images = storedImages(row).map((image, index) => ({
+      fileName: image.fileName,
+      ...(conversationId && messageId && image.source
+        ? {
+            url:
+              "/api/conversations/" +
+              encodeURIComponent(conversationId) +
+              "/images/" +
+              encodeURIComponent(messageId) +
+              "/" +
+              index,
+          }
+        : {}),
+    }));
     const meta = record(row.__openclaw);
     const base =
       text(meta.id) ||

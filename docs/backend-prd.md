@@ -47,11 +47,12 @@ Return JSON except for a successful message submission.
 | POST /api/conversations | 201 with `{ id }` for a new empty conversation |
 | GET /api/conversations | 200 with `{ items, nextCursor }` |
 | GET /api/conversations/:id | 200 with `{ id, messages, nextCursor, activeRun, syncState }` |
+| GET /api/conversations/:id/images/:messageId/:index | Image bytes for one saved message attachment |
 | POST /api/conversations/:id/messages | JSON body `{ requestId, text, attachments? }`; 200 SSE after gateway acceptance |
 | POST /api/conversations/:id/runs/:runId/cancel | 202 after the gateway accepts cancellation; this does not prove that the run stopped |
 
 A list item contains `id`, an available title, and an available update time.
-A history message contains a stable display ID, role, visible text, and available image filenames.
+A history message contains a stable display ID, role, visible text, and available image filenames and same-origin preview URLs.
 A tool activity row contains bounded call IDs, tool name, safe target, and outcome.
 Join calls and results by ID, including across loaded pages. An unavailable result has an unknown outcome.
 Mark other unsupported content. Do not return reasoning or raw tool arguments and outputs.
@@ -143,7 +144,10 @@ Accept PNG, JPEG, WebP, and GIF. Require canonical base64 and safe filenames.
 Validate signatures before submission. OpenClaw performs full image preparation.
 Permit blank text only when images are present.
 Use official chat.send attachments with type, mimeType, fileName, and content.
-Keep storage in OpenClaw. History returns filenames, without image bytes or local media paths.
+Keep storage in OpenClaw. History returns filenames and same-origin preview URLs, without image bytes or local media paths.
+The preview route reads the exact saved message with official chat.message.get and selects the retained image by index.
+Read its canonical media://inbound reference through OpenClaw's authenticated assistant-media HTTP route with the saved scoped device token.
+Bound each image read to 5 MiB. Do not relay upstream credentials, cookies, errors, redirects, or arbitrary source URLs.
 Limit a visible answer to 64 KiB.
 If that limit is exceeded, stop buffering, report the limit, and request cancellation.
 Keep the run slot reserved until the gateway confirms the outcome.

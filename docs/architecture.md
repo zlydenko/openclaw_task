@@ -106,7 +106,11 @@ OpenClaw owns media detection, storage, and text-only-model offload.
 Kimi uses the native image tool with OpenRouter Gemini 2.5 Flash-Lite for image analysis.
 The image model uses chat completions and the same provider SecretRef. Its definition and native tool use a 4096-token output limit.
 Chat stays on Kimi and the Responses API. No new provider, service, database, or mount is added.
-History projects image filenames only. Composer and current-turn thumbnails use in-memory bytes.
+History projects image filenames and stable same-origin preview URLs bound to conversation, message, and image index.
+On an image GET, Hono checks the conversation and reads the exact message with official chat.message.get.
+The adapter fetches the message's retained media://inbound reference through the authenticated OpenClaw assistant-media route.
+It uses the current scoped device token in a server-side header. Reads are bounded to 5 MiB; credentials and upstream headers do not reach the browser.
+OpenClaw retains all image storage. Composer and current-turn thumbnails use in-memory bytes.
 Read-only recovery never resends attachments. Unknown submissions retain their run lock.
 See [the pinned official attachment builder](https://github.com/openclaw/openclaw/blob/v2026.10.3/ui/src/pages/chat/attachment-api.ts).
 

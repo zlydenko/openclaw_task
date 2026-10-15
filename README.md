@@ -148,7 +148,11 @@ A page reload discards unsent drafts. The app never retries message POST request
 
 Hono forwards base64 attachments through the official `chat.send.attachments` field.
 OpenClaw validates and stores the images in its private gateway state.
-Saved history shows attachment filenames. Draft and current-turn previews use local image bytes.
+Saved history restores image previews after navigation and page reload.
+The backend reads the exact saved message through official `chat.message.get`, then reads its image through OpenClaw's authenticated media route.
+The browser uses a same-origin Hono image URL. Gateway credentials stay in the backend.
+This uses the pinned [native retained-media handler](https://github.com/openclaw/openclaw/blob/v2026.10.3/src/gateway/control-ui.ts).
+If a saved image is unavailable, its filename remains visible with a Retry control.
 No separate upload service, file database, host mount, or new dependency is used.
 
 Kimi K2 Thinking accepts text. OpenClaw's native `image` tool uses

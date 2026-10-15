@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { ImagePreview } from "./ImagePreview.tsx";
 import { Activity } from "./Activity.tsx";
 import type { MessagesProps } from "../types.ts";
 
@@ -60,13 +61,7 @@ export function Messages({ messages, loading, hasMore, more }: MessagesProps) {
               {!!message.images?.length && (
                 <div className="message-images">
                   {message.images.map((image, index) => (
-                    <figure key={index}>
-                      {image.url && <img src={image.url} alt={image.fileName} loading="lazy" />}
-                      <figcaption>
-                        <span aria-hidden="true">▧ </span>
-                        {image.fileName}
-                      </figcaption>
-                    </figure>
+                    <ImagePreview key={image.url ?? index} image={image} />
                   ))}
                 </div>
               )}

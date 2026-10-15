@@ -14,7 +14,10 @@ export type ImageAttachment = {
 };
 
 export type MessageInput = { requestId: string; text: string; attachments?: ImageAttachment[] };
-export type MessageImage = { fileName: string };
+export type MessageImage = { fileName: string; url?: string };
+export type StoredImage = { fileName: string; source?: string };
+export type ImageContent = { bytes: Uint8Array<ArrayBuffer>; mimeType: string };
+export type MessageResult = { ok: boolean; message?: unknown };
 export type Page = { limit: number; offset: number; emptyOffset: number };
 export type ApiStatus = 400 | 404 | 409 | 413 | 503;
 
@@ -25,6 +28,8 @@ export type ApiEnv = {
     page: Page;
     conversationId: string;
     runId: string;
+    imageMessageId: string;
+    imageIndex: number;
   };
 };
 
@@ -33,7 +38,7 @@ export type ApiContext = Context<ApiEnv>;
 export type ApiHandler = Handler<ApiEnv>;
 
 export type ChatController = Record<
-  "health" | "ready" | "create" | "list" | "history" | "send" | "cancel",
+  "health" | "ready" | "create" | "list" | "history" | "image" | "send" | "cancel",
   ApiHandler
 >;
 

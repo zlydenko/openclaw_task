@@ -42,7 +42,10 @@ Provide an image picker and clipboard paste. Show thumbnails and a Remove contro
 Permit PNG, JPEG, WebP, and GIF. Limit each message to four images and 5 MiB total.
 Send images with text or on their own. Retain image drafts per conversation in memory.
 Disable sending during image reads. Clear only accepted images, preserving newer draft images.
-Saved history shows image filenames. Current-turn previews use local image bytes.
+Saved history shows image previews and filenames after navigation and page reload.
+Load saved previews lazily from same-origin backend URLs. Reserve preview space.
+Show an unavailable message and an explicit Retry control when an image fails to load.
+Retry only the image GET. Do not repeat a message POST. Current-turn previews use local image bytes.
 Generate one UUID request ID per explicit send. Mark outgoing text pending until acceptance.
 Reconcile pending messages with history without duplication. Do not submit from a React effect.
 

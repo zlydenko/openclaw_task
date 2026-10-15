@@ -1,6 +1,12 @@
 import type { Chat } from "./chat.ts";
 import { createChatController } from "./controller.ts";
-import { conversationParams, emptyBody, messageBody, pagination } from "./middleware.ts";
+import {
+  conversationParams,
+  emptyBody,
+  imageParams,
+  messageBody,
+  pagination,
+} from "./middleware.ts";
 import type { ApiApp } from "./types.ts";
 
 export function registerRoutes(app: ApiApp, chat: Chat) {
@@ -17,6 +23,13 @@ export function registerRoutes(app: ApiApp, chat: Chat) {
     pagination((c) => c.req.param("id") ?? ""),
     conversationParams,
     controller.history,
+  );
+
+  app.get(
+    "/api/conversations/:id/images/:messageId/:index",
+    conversationParams,
+    imageParams,
+    controller.image,
   );
 
   app.post("/api/conversations/:id/messages", messageBody, conversationParams, controller.send);

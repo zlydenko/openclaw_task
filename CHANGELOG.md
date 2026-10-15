@@ -3,6 +3,14 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Saved image previews — 2026-10-15
+
+- Restore saved image previews after switching conversations and reloading the page.
+- Read exact saved messages and retained media through official OpenClaw interfaces.
+- Serve same-origin previews with the existing scoped device token kept in the backend.
+- Bind reads to their conversation and message. Bound image reads and show an explicit Retry control for failed previews.
+- Add navigation, reload, native-access, credential-rotation, and media-boundary regression checks.
+
 ## Image attachments — 2026-10-15
 
 - Add an image picker, clipboard paste, thumbnails, and removal in the composer.

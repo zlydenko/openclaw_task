@@ -192,3 +192,12 @@ Allow one chat turn plus one native image-analysis call, and account for native 
 Check the image tool's actual outcome. Do not infer success from acceptance or configuration validation.
 Reload the conversation and check its saved attachment filename.
 If the run fails or its outcome is unknown, read history and record the result before another explicit send.
+
+## Saved image preview verification — 2026-10-16
+
+- TypeScript, Oxlint, Oxfmt, production build, and all 30 Vitest checks passed.
+- Added checks cover native exact-message lookup, conversation binding, same-origin image bytes, credential rotation, upstream header isolation, invalid references, non-image responses, bounded chunked reads, navigation, and a fresh browser controller. No check resends a message.
+- The pinned OpenClaw assistant-media HTTP route accepted the backend's existing scoped device token. The real saved PNG returned 200 with 154820 bytes through the rebuilt Hono service. History kept the same preview URL after another read. A missing attachment index returned 404.
+- Browser checks used the existing saved CAP diagram. Its image loaded after switching to another conversation and back. A full page reload loaded the same saved image through the Hono URL. No new chat message or paid model request was made.
+- Compose validation, API image build and startup, gateway configuration validation, health, readiness, and conversation reads passed. The gateway was kept running and all state volumes were preserved.
+- Images stay in native OpenClaw storage. Missing or removed native media cannot be restored by the preview route; the interface shows an unavailable state with an explicit image-only Retry.

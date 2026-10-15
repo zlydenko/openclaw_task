@@ -444,7 +444,14 @@ it("sends an image-only message once, isolates drafts, and reconciles saved atta
   histories.set(first, {
     ...empty(first),
     messages: [
-      { id: "saved-image", role: "user", text: "", images: [{ fileName: "example.png" }] },
+      {
+        id: "saved-image",
+        role: "user",
+        text: "",
+        images: [
+          { fileName: "example.png", url: "/api/conversations/" + first + "/images/saved-image/0" },
+        ],
+      },
       { id: "saved-answer", role: "assistant", text: "An image." },
     ],
   });
@@ -455,6 +462,18 @@ it("sends an image-only message once, isolates drafts, and reconciles saved atta
   const state = controller.snapshot();
   expect(visibleMessages(state.views[first], state.turns[first])).toHaveLength(2);
   expect(state.selected).toBe(second);
+  await select(first);
+  expect(
+    visibleMessages(controller.snapshot().views[first], controller.snapshot().turns[first])[0]
+      ?.images?.[0]?.url,
+  ).toBe("/api/conversations/" + first + "/images/saved-image/0");
+  controller.close();
+  controller = new ChatController();
+  await controller.refresh();
+  await select(first);
+  expect(visibleMessages(controller.snapshot().views[first])[0]?.images?.[0]?.url).toBe(
+    "/api/conversations/" + first + "/images/saved-image/0",
+  );
   expect(sends).toBe(1);
 });
 

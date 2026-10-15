@@ -134,6 +134,22 @@ export const conversationParams = createMiddleware<ApiEnv>(async (c, next) => {
   await next();
 });
 
+export const imageParams = createMiddleware<ApiEnv>(async (c, next) => {
+  const messageId = c.req.param("messageId");
+  const index = c.req.param("index");
+  if (
+    !messageId ||
+    messageId.length > 256 ||
+    !/^[\w.:-]+$/.test(messageId) ||
+    !/^[0-3]$/.test(index ?? "")
+  )
+    throw new ApiError(404, "IMAGE_NOT_FOUND", "Image not found.");
+
+  c.set("imageMessageId", messageId);
+  c.set("imageIndex", Number(index));
+  await next();
+});
+
 export const pagination = (scope: (c: ApiContext) => string = () => "list") =>
   createMiddleware<ApiEnv>(async (c, next) => {
     c.set("page", pageFrom(c.req.query("limit"), c.req.query("cursor"), scope(c)));

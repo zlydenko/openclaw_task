@@ -41,7 +41,9 @@ export function loadGatewayDevice(directory: string, bootstrapFile: string): Gat
 
   return {
     identity,
-    token: text(saved().token) || readFileSync(bootstrapFile, "utf8").trim(),
+    get token() {
+      return text(saved().token) || readFileSync(bootstrapFile, "utf8").trim();
+    },
     hostDeps: {
       signDevicePayload: (key, payload) =>
         sign(null, Buffer.from(payload), key).toString("base64url"),

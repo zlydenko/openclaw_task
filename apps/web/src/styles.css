@@ -879,3 +879,20 @@ button {
     font-size: 9px;
   }
 }
+
+.message-images img,
+.image-unavailable {
+  width: 240px;
+  height: 160px;
+  max-width: 100%;
+}
+.image-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}

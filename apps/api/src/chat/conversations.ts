@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { ApiError } from "../errors.ts";
+import { storedImages } from "../gateway/images.ts";
 import { conversationId, projectMessages, visibleMessage } from "../gateway/messages.ts";
 import { isFallbackName, titleFromUserText } from "../gateway/titles.ts";
 import type { OpenClaw } from "../openclaw.ts";
@@ -114,6 +115,14 @@ export class Conversations {
     throw new ApiError(404, "NOT_FOUND", "Conversation not found.");
   }
 
+  async image(id: string, messageId: string, index: number) {
+    const result = await this.gateway.message(id, messageId);
+    const source = result.ok ? storedImages(result.message)[index]?.source : undefined;
+    if (!source) throw new ApiError(404, "IMAGE_NOT_FOUND", "Image not found.");
+
+    return this.gateway.image(id, source);
+  }
+
   async history(id: string, page: Page, hasActiveRun: boolean) {
     const history =
       this.empty.has(id) && !hasActiveRun
@@ -122,7 +131,7 @@ export class Conversations {
 
     return {
       id,
-      messages: projectMessages(history.messages ?? []),
+      messages: projectMessages(history.messages ?? [], id),
       nextCursor:
         history.hasMore && history.nextOffset !== undefined
           ? cursorFor(id, history.nextOffset)

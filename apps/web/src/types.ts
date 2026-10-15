@@ -112,6 +112,8 @@ export type SidebarProps = {
   toggleTheme: () => void;
 };
 
+export type ImagePreviewProps = { image: MessageImage };
+
 export type MessagesProps = {
   messages: Message[];
   loading: boolean;

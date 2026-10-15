@@ -114,6 +114,13 @@ export class Chat {
     };
   }
 
+  async image(id: string, messageId: string, index: number) {
+    this.requireConnection();
+    await this.conversations.known(id, this.runs.active.get(id));
+
+    return this.conversations.image(id, messageId, index);
+  }
+
   async send(
     id: string,
     requestId: string,

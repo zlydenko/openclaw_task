@@ -18,6 +18,16 @@ export function createChatController(chat: Chat): ChatController {
 
     history: async (c) => c.json(await chat.history(c.var.conversationId, c.var.page)),
 
+    image: async (c) => {
+      const { bytes, mimeType } = await chat.image(
+        c.var.conversationId,
+        c.var.imageMessageId,
+        c.var.imageIndex,
+      );
+      c.header("Content-Security-Policy", "default-src 'none'; sandbox");
+      return c.body(bytes, 200, { "Content-Type": mimeType });
+    },
+
     send: async (c) => {
       const { requestId, text, attachments } = c.var.messageInput;
       const run = await chat.send(c.var.conversationId, requestId, text, attachments);
