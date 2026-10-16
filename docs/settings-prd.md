@@ -229,7 +229,7 @@ Register a missing selected model through the same native config patch before re
 Merge provider model entries by ID. Preserve existing rows, fallbacks, allowlists, and custom fields.
 If a configured model allowlist would block the choice, add only the selected reviewed reference as part of the reviewed change, or report the conflict.
 Do not overwrite custom transport settings for an existing model automatically.
-New candidates should use a reviewed per-model transport, normally OpenRouter chat completions, without changing Kimi's existing Responses API setting for other models.
+New candidates should use a reviewed per-model transport, normally OpenRouter chat completions, without changing other configured models' transport settings.
 Keep the 4096-token application model output cap. Do not copy a large provider maximum into the runtime limit.
 
 Opening Settings, reading metadata, and applying config must not make inference requests.

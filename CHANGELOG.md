@@ -3,6 +3,14 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Kimi tool-call transport recovery — 2026-10-16
+
+- Use native OpenRouter Chat Completions for Kimi. Keep reasoning enabled and exclude its text from provider responses.
+- Avoid the Responses tool-name mismatch without patching OpenClaw or delaying visible answer fragments.
+- Apply the same settings to local saved state. Retain tool search, native recovery, conversations, and device identity.
+- Recover the affected conversation with native compaction. Verify file tools, actual HTTP server execution, retained context, and live visible updates.
+- Record bounded results and remaining limits. Keep historical findings unchanged.
+
 ## Settings UI design — 2026-10-15
 
 - Define a draft PRD for individual tool toggles and chat and image-analysis model selection.

@@ -157,12 +157,12 @@ No separate upload service, file database, host mount, or new dependency is used
 
 Kimi K2 Thinking accepts text. OpenClaw's native `image` tool uses
 `openrouter/google/gemini-2.5-flash-lite` for image analysis.
-The image model uses OpenRouter chat completions. Kimi keeps its Responses API configuration.
+The image model and Kimi use OpenRouter chat completions.
 The image tool uses the existing provider SecretRef. It makes additional paid requests when called.
 On 2026-10-16, OpenRouter listed $0.10 per million input tokens and $0.40 per million output tokens.
 Image input uses the listed input rate. The image model definition and native tool use a 4096-token output limit.
 Native naming and the chat turn can have separate costs.
-No paid image recognition check has been run for this change. Existing Kimi tool-call limitations still apply.
+No paid image recognition check has been run for this change. Image recognition and arbitrary tool workflows remain unverified.
 
 New gateway state receives the image model from `docker/openclaw.json`.
 Existing state keeps its saved configuration. For an existing installation, inspect the current model list:
@@ -243,8 +243,12 @@ The model can stop before a correction succeeds.
 Existing tool permissions and run deadlines still apply.
 See the official [agent loop](https://docs.openclaw.ai/concepts/agent-loop) and [retry policy](https://docs.openclaw.ai/concepts/retry).
 
-The selected model still has unresolved tool-call failures. Real patch correction remains unverified.
-See the [verification record](docs/verification.md#tool-activity-verification--2026-10-16) and [findings](docs/findings.md).
+The current Kimi route uses native Chat Completions. Reasoning stays enabled, but its text is excluded from provider responses.
+This avoids the Responses tool-name mismatch and the reasoning-triggered text buffering recorded in earlier checks.
+Native read, write, execution, retained context, and a local HTTP server check passed with visible streaming.
+An older conversation that stopped after announcements recovered after native `/compact`. Its saved history was retained.
+Real patch correction and arbitrary tool workflows remain unverified.
+See the [transport recovery record](docs/verification.md#kimi-tool-call-recovery--2026-10-16) and historical [findings](docs/findings.md).
 
 ## Local code checks
 
@@ -326,7 +330,10 @@ Do this only in the terminal where you need the extra trust.
 | `scripts/setup.mjs`            | Prepare local credentials |
 | `compose.ca.yaml` | Optional custom CA mounts for build and runtime |
 
-The model uses the Responses API for visible streaming.
+The model uses native Chat Completions with `reasoning.enabled: true` and `reasoning.exclude: true` in its `params.extraBody`.
+Kimi still reasons internally. Reasoning tokens remain billable, but reasoning text does not enter the live-text terminal-classification gate.
+Visible answer fragments stream during generation. No upstream code patch or artificial answer chunking is used.
+See the [OpenRouter reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
 The full tool profile uses tool search. Code mode selects supported models automatically and uses the bundled QuickJS executor.
 Memory search and private cross-conversation recall are enabled. Keyword search uses the local index without paid embedding requests.
 Recall can make an additional model request during a user turn.
@@ -340,7 +347,7 @@ General public browsing remains restricted; see the [trade-offs](#browser-networ
 The scheduler is enabled. Memory dreaming is disabled, and Skill Workshop creates proposals instead of applying changes automatically.
 The local gateway reconciled its system-owned background schedules before scheduler activation. No enabled jobs remain.
 Periodic heartbeats and elevated execution remain disabled. Existing execution permissions still apply.
-Provider tool-call compatibility remains an unresolved finding.
+The historical Responses tool-name defect is avoided by the current native route. Task completion still needs observed tool results.
 
 ## Browser networking trade-offs
 

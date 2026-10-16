@@ -45,7 +45,10 @@ Use the OpenClaw CLI to change saved settings explicitly.
 Validate the configuration after each change.
 Restart the gateway when the change requires it.
 
-The selected model uses `openai-responses`.
+The selected model uses `openai-completions`.
+Its per-model `params.extraBody.reasoning` sets `enabled: true` and `exclude: true`.
+The model still reasons internally. Excluding reasoning text avoids the terminal-classification gate that held visible text in the earlier Chat Completions checks.
+The native route also avoids the Responses tool-name consistency failure.
 The full tool profile uses tool search. Code mode uses automatic model selection with the bundled QuickJS executor.
 Memory uses local keyword search. Private cross-conversation recall is enabled and can add a model request during a user turn.
 Browser support and the built-in Control UI are enabled. The gateway port remains private.
@@ -55,6 +58,26 @@ The scheduler is enabled. Its system-owned background schedules were reconciled 
 Memory dreaming and periodic heartbeats remain disabled. Skill Workshop proposes changes for review.
 Existing execution permissions remain in force. Elevated execution stays disabled.
 Read [findings](findings.md) before changing the provider API or claiming that tool calls work.
+
+### Apply the Kimi transport correction to saved state
+
+A rebuild preserves saved configuration. With all conversations idle, apply both settings through the official CLI:
+
+```bash
+docker compose exec openclaw-gateway node dist/index.js config set models.providers.openrouter.api openai-completions
+docker compose exec openclaw-gateway node dist/index.js config set 'agents.defaults.models["openrouter/moonshotai/kimi-k2-thinking"].params.extraBody.reasoning' '{"enabled":true,"exclude":true}' --strict-json
+docker compose exec openclaw-gateway node dist/index.js config validate
+```
+
+Both settings support native hot application in this release. The local gateway was also recreated and checked after the change.
+Keep any other per-model settings. The image model keeps its own Chat Completions setting.
+The local saved configuration already has this correction.
+
+If an existing conversation still ends after announcing work, inspect its tool results first.
+The affected conversation recovered after the native `/compact` command with a factual summary of completed actions and pending work.
+Compaction preserves saved history and changes the model's working context. It uses paid model credit.
+Do not reset or delete the conversation, edit its transcript, or replay accepted requests to force recovery.
+See [the live recovery record](verification.md#kimi-tool-call-recovery--2026-10-16) and [native compaction](https://docs.openclaw.ai/concepts/compaction).
 
 ## Gateway browser
 

@@ -13,10 +13,11 @@ The gateway port is not published on the host.
 The image is pinned in `docker/Dockerfile`.
 The [README](../README.md) describes the implemented setup.
 
-The provider API is `openai-responses`.
-Historical checks found visible streaming with the selected model.
-Tool-call compatibility remains unresolved.
-Read [findings](findings.md) for the evidence and limits.
+The provider API is `openai-completions`.
+Kimi's per-model `params.extraBody.reasoning` enables reasoning and excludes its text from the response.
+This avoids the Responses tool-name mismatch and the native terminal gate triggered by returned reasoning.
+File tools, local HTTP execution, retained context, and visible streaming passed bounded live checks.
+Read [verification](verification.md#kimi-tool-call-recovery--2026-10-16) for current evidence and [findings](findings.md) for historical limits.
 The full tool profile and tool search do not override existing service permissions.
 
 ## Application
@@ -105,7 +106,7 @@ The adapter passes the official chat.send attachments envelope through the exist
 OpenClaw owns media detection, storage, and text-only-model offload.
 Kimi uses the native image tool with OpenRouter Gemini 2.5 Flash-Lite for image analysis.
 The image model uses chat completions and the same provider SecretRef. Its definition and native tool use a 4096-token output limit.
-Chat stays on Kimi and the Responses API. No new provider, service, database, or mount is added.
+Chat stays on Kimi through native Chat Completions. No new provider, service, database, or mount is added.
 History projects image filenames and stable same-origin preview URLs bound to conversation, message, and image index.
 On an image GET, Hono checks the conversation and reads the exact message with official chat.message.get.
 The adapter fetches the message's retained media://inbound reference through the authenticated OpenClaw assistant-media route.
@@ -164,5 +165,5 @@ Authorize each command, history request, attachment, and event subscription.
 
 - [Gateway client guide](https://docs.openclaw.ai/gateway/clients)
 - [Gateway protocol](https://docs.openclaw.ai/gateway/protocol)
-- [OpenRouter Responses API](https://openrouter.ai/docs/api/reference/responses/overview)
+- [OpenRouter reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens)
 - [Hono streaming](https://hono.dev/docs/helpers/streaming)

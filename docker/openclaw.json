@@ -38,7 +38,7 @@
     "providers": {
       "openrouter": {
         "baseUrl": "https://openrouter.ai/api/v1",
-        "api": "openai-responses",
+        "api": "openai-completions",
         "apiKey": {
           "source": "file",
           "provider": "openrouterfile",
@@ -83,6 +83,18 @@
       "maxConcurrent": 3,
       "model": {
         "primary": "openrouter/moonshotai/kimi-k2-thinking"
+      },
+      "models": {
+        "openrouter/moonshotai/kimi-k2-thinking": {
+          "params": {
+            "extraBody": {
+              "reasoning": {
+                "enabled": true,
+                "exclude": true
+              }
+            }
+          }
+        }
       },
       "heartbeat": {
         "every": "0m"

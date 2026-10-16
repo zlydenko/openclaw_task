@@ -230,8 +230,9 @@ Use a separate longer response only when the short messages cannot show streamin
 Check transport failures without repeated paid retries.
 Record meaningful outcomes rather than shallow function checks.
 
-The [recorded tool-call failure](findings.md#f02-tool-call-name-changed-during-a-responses-stream) remains unresolved.
-Report it through the same error path.
+The [recorded Responses tool-call failure](findings.md#f02-tool-call-name-changed-during-a-responses-stream) remains an upstream limitation.
+The current native Chat Completions configuration avoids that path and excludes reasoning text while retaining visible answer streaming.
+See [the bounded live checks](verification.md#kimi-tool-call-recovery--2026-10-16). Report any later failure through the same error path.
 Use OpenClaw's native agent loop and provider recovery.
 The model can stop before a correction succeeds. Provider failures can still end the run.
 The backend observes tool activity and never executes or retries a tool itself.

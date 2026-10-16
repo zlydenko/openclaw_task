@@ -1,5 +1,53 @@
 # Verification
 
+## Kimi tool-call recovery — 2026-10-16
+
+Gateway release: OpenClaw 2026.10.3. Model: `openrouter/moonshotai/kimi-k2-thinking`.
+Affected conversation: `96feaa62-a451-44f5-9807-5f4adaa45e8f`.
+
+The original request listed the workspace, then failed before writing a server.
+The gateway logged `Responses stream changed tool-call function name from write to functions_write`.
+The installed Responses validator requires the streamed and completed names to match exactly.
+The current upstream validator still has that check. The saved error does not identify which upstream component changed the name.
+A small direct provider check returned consistent names. The fault was not reproduced on every request.
+
+The final configuration uses native Chat Completions with per-model `params.extraBody.reasoning` set to `{"enabled":true,"exclude":true}`.
+The outbound request trace confirmed both settings and the expected 11 tool names with `tool_choice: auto`.
+Reasoning remains enabled and billable. Its text is omitted from the response, so it does not trigger the native reasoning-text terminal gate recorded in F01.
+The normal OpenClaw parser, tool execution, recovery, and message transport remain unmodified.
+
+Some early live turns still ended after announcing work. Native tracing showed an upstream `stop` with no returned tool call, despite the advertised tools.
+One such response came from Google's Kimi serving endpoint. No serving-provider restriction or model replacement was applied.
+The original conversation recovered after native `/compact` reduced the model context from about 13k to 1.5k tokens.
+The same Google endpoint then returned actual tool calls. This does not establish a provider-wide defect or prove why the earlier context caused early stops.
+The full original history remained available through `chat.history`, including the first request and earlier tool results.
+
+| Check | Observed outcome | First visible text | Terminal event | Visible updates |
+| --- | --- | --- | --- | --- |
+| Fresh conversation: read a synthetic text fixture | Native `read` succeeded; the answer used its result | 6.386 s | 8.040 s | 5 |
+| Same conversation: execute a synthetic Node HTTP check | Native `exec` returned `{"status":200,"body":"TOOL_SERVER_OK"}`; the prior marker was recalled | 5.564 s | 11.489 s | 13 |
+| Original conversation after compaction: write and execute a server script | Native `write` and `exec` succeeded in sequence; HTTP status and body matched; `ORCHID-6842` was retained | 5.342 s | 12.613 s | 10 |
+| Original conversation after restoring the normal image | Native `read` succeeded and the original marker was recalled | 6.059 s | 23.439 s | 7 |
+
+These are HTTP/SSE observations through Hono. They are not a new browser automation check.
+The saved native tool result, not the assistant's claim, established the HTTP outcome.
+The test server closed in `finally`. A later socket check confirmed that port 31847 was not listening.
+The final read returned the synthetic fixture. Its answer retained an extra partial commentary prefix, so exact two-line formatting did not pass.
+Tool search remains enabled. These checks did not establish arbitrary deferred-tool dispatch, browser navigation, image analysis, or patch correction.
+
+TypeScript, Oxlint, Oxfmt, all 30 existing integration checks, and the production build passed.
+Compose validation, Bash startup syntax, saved and initial configuration validation, service health, and authenticated readiness passed.
+The final Responses and Chat Completions module hashes matched the unmodified image modules inspected before diagnosis.
+Temporary parser experiments and diagnostic code were removed from the running service. No custom retry plugin or gateway harness was added.
+Gateway conversations and device identity volumes were retained. No message POST or tool event was replayed by the application.
+Live checks used explicit user opt-in with a US$0.20 total cap, including native naming. Provider usage reporting was delayed; an exact final invoice is not asserted here.
+Historical findings were kept unchanged.
+
+Sources: [native OpenRouter integration](https://docs.openclaw.ai/providers/openrouter),
+[reasoning exclusion](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens),
+[native compaction and retained history](https://docs.openclaw.ai/concepts/compaction),
+and [the upstream Responses validator](https://github.com/openclaw/openclaw/blob/main/packages/ai/src/transports/openai-responses-stream-terminal-internal.ts).
+
 ## R1 manual checks
 
 R1 uses the official terminal client.
