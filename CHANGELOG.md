@@ -3,6 +3,12 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Saved chat model label — 2026-10-16
+
+- Replace the fixed Kimi composer label with the saved chat model name.
+- Load model settings in chat without opening Settings. Refresh changes from other tabs while preserving drafts.
+- Use the same model label on the welcome screen and respect main-agent overrides.
+
 ## Default Settings access — 2026-10-16
 
 - Include Settings access in normal backend pairing. Reuse the same identity and approved token across starts.

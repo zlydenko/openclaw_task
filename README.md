@@ -84,6 +84,9 @@ The panel has model selectors, individual tool switches, and separate USER.md an
 Review the saved values and draft before each explicit Apply or Save action.
 Drafts stay in memory during navigation. A page refresh discards them.
 The panel and chat share the top-right gateway status indicator.
+The chat model label reads the saved configuration, including a main-agent override.
+It updates after Apply, on page load, and when this tab reads changes from another tab.
+Unsaved drafts do not change the label. Conversation overrides and native fallbacks can take precedence.
 
 Config application and file saves wait for all application turns to have confirmed outcomes.
 The waiting loader does not mean that a draft was saved. Select Apply or Save after the wait ends.

@@ -123,6 +123,7 @@ export type MessagesProps = {
 };
 
 export type ComposerProps = {
+  modelLabel: string;
   draft: string;
   attachments: ImageAttachment[];
   imageLoading: boolean;

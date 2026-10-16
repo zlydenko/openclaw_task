@@ -306,3 +306,11 @@ Catalog source: [OpenRouter model metadata](https://openrouter.ai/api/v1/models)
 - A second npm run up confirmed readiness without another approval or API restart. A separate API restart retained Settings access with the saved token. Native config validation, both Compose configurations, and service health passed.
 - Browser checks showed enabled chat and image model selectors with no access-warning banner. Default access for differing fresh reviewer identities was checked with controlled CLI responses; no second live gateway or extra state volume was created.
 - No paid model request was made. Tool policy and file storage checks do not establish model tool-call or image-recognition compatibility. Historical findings, gateway authentication, device checks, execution permissions, the private gateway port, and resource limits were preserved.
+
+## Saved chat model label — 2026-10-16
+
+- npm run check, all 55 Vitest checks, and npm run build passed.
+- Controlled HTTP checks cover initial chat polling without opening Settings, confirmed Apply, unsaved drafts, external changes, page reload, and main-agent override labels. Reads do not submit messages or load workspace file bodies.
+- Rebuilt only the API service. Health, readiness, and Settings reads returned 200. The saved GLM 5.3 Flash chat model and Qwen image model were retained.
+- Browser checks showed GLM 5.3 Flash on the welcome screen and in an existing conversation's composer, including after a full page reload.
+- No paid model request was made. The label identifies configured selection; conversation overrides and native fallbacks retain their normal behavior. Gateway state and device volumes were preserved.

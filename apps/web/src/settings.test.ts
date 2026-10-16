@@ -11,7 +11,7 @@ import { Chat } from "../../api/src/chat.ts";
 import { OpenClaw } from "../../api/src/openclaw.ts";
 import { sessionKey } from "../../api/src/gateway/messages.ts";
 import type { ConfigSnapshot, JsonRecord } from "../../api/src/types.ts";
-import { SettingsController } from "./settings.ts";
+import { chatModelLabel, SettingsController } from "./settings.ts";
 
 const disposals: (() => void | Promise<void>)[] = [];
 const hash = (content: string) => createHash("sha256").update(content).digest("hex");
@@ -230,6 +230,76 @@ it("projects safe settings, enforces permissions and payload limits, and keeps c
     ).status,
   ).toBe(400);
   expect(f.count("config.patch")).toBe(0);
+});
+
+it("loads the saved chat label without opening Settings and follows external changes while retaining drafts", async () => {
+  const f = await fixture();
+  const page = Object.assign(new EventTarget(), { hidden: false });
+  vi.stubGlobal("document", page);
+  const browser = new SettingsController();
+  disposals.unshift(() => browser.close());
+  expect(chatModelLabel(browser.snapshot().current)).toBe("Loading model…");
+  browser.start();
+  await vi.waitFor(() =>
+    expect(chatModelLabel(browser.snapshot().current)).toBe("Kimi K2 Thinking"),
+  );
+  browser.changeModel("chatModel", "openrouter/qwen/qwen3.7-flash");
+  expect(chatModelLabel(browser.snapshot().current)).toBe("Kimi K2 Thinking");
+
+  const agents = f.snapshot.config.agents as JsonRecord;
+  const defaults = agents.defaults as JsonRecord;
+  defaults.model = "openrouter/z-ai/glm-5.3-flash";
+  page.dispatchEvent(new Event("visibilitychange"));
+  await vi.waitFor(() => expect(chatModelLabel(browser.snapshot().current)).toBe("GLM 5.3 Flash"));
+  expect(browser.snapshot().chatModel).toBe("openrouter/qwen/qwen3.7-flash");
+  expect(f.count("agents.files.get")).toBe(0);
+  expect(f.count("config.patch")).toBe(0);
+  expect(f.count("chat.send")).toBe(0);
+  browser.close();
+
+  const reloaded = new SettingsController();
+  disposals.unshift(() => reloaded.close());
+  reloaded.start();
+  await vi.waitFor(() => expect(chatModelLabel(reloaded.snapshot().current)).toBe("GLM 5.3 Flash"));
+  (agents.entries as JsonRecord).main = { model: "provider/agent-override" };
+  await reloaded.refresh();
+  expect(chatModelLabel(reloaded.snapshot().current)).toBe("provider/agent-override");
+});
+
+it("updates the chat label only after a model change is confirmed", async () => {
+  const f = await fixture();
+  const browser = new SettingsController();
+  await browser.refresh();
+  browser.changeModel("chatModel", "openrouter/z-ai/glm-5.3-flash");
+  let finish!: () => void;
+  f.patch(async (input) => {
+    const patch = JSON.parse(String(input.raw));
+    await new Promise<void>((done) => {
+      finish = done;
+    });
+    Object.assign(
+      (f.snapshot.config.agents as JsonRecord).defaults as JsonRecord,
+      patch.agents.defaults,
+    );
+    const providers = (f.snapshot.config.models as JsonRecord).providers as JsonRecord;
+    (providers.openrouter as JsonRecord).models = patch.models.providers.openrouter.models;
+    f.snapshot.hash = "base-2";
+    f.snapshot.configRevisionHash = "revision-2";
+    f.snapshot.appliedConfigHash = "revision-2";
+    return { ok: true, hash: "base-2" };
+  });
+  const applying = browser.apply();
+  await vi.waitFor(() => expect(f.count("config.patch")).toBe(1));
+  const reads = f.count("config.get");
+  await browser.refresh();
+  expect(f.count("config.get")).toBe(reads);
+  expect(chatModelLabel(browser.snapshot().current)).toBe("Kimi K2 Thinking");
+  finish();
+  await applying;
+  expect(browser.snapshot().error).toBe("");
+  expect(chatModelLabel(browser.snapshot().current)).toBe("GLM 5.3 Flash");
+  expect(f.count("config.patch")).toBe(1);
+  expect(f.count("chat.send")).toBe(0);
 });
 
 it("serializes model/tool application with chat admission and preserves unrelated config and exact denies", async () => {

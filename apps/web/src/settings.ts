@@ -17,6 +17,12 @@ const emptyFile = (): FileEditor => ({
 const message = (error: unknown) =>
   error instanceof Error ? error.message : "The request could not be confirmed.";
 
+export function chatModelLabel(current: SettingsData | null) {
+  if (!current) return "Loading model…";
+  const id = current.overrides.chatModel || current.chatModel;
+  return current.models.find((model) => model.id === id)?.name || id || "Model unavailable";
+}
+
 export class SettingsController {
   private state: SettingsState = {
     saved: null,
@@ -33,7 +39,6 @@ export class SettingsController {
   private listeners = new Set<() => void>();
   private timer?: ReturnType<typeof setTimeout>;
   private stopped = false;
-  private visible = false;
   private polling = false;
   private refreshEpoch = 0;
   snapshot = () => this.state;
@@ -66,7 +71,6 @@ export class SettingsController {
   };
 
   setVisible(value: boolean) {
-    this.visible = value;
     if (value) {
       void this.refresh();
       for (const name of ["USER.md", "MEMORY.md"] as const)
@@ -86,7 +90,7 @@ export class SettingsController {
         });
         const body = await response.json();
         if (body.gateway) this.update({ indicator: body.gateway });
-        if (this.visible) await this.refresh();
+        await this.refresh();
       }
     } catch {
       this.update({
@@ -103,6 +107,7 @@ export class SettingsController {
   }
 
   async refresh() {
+    if (this.state.pending === "config") return;
     const epoch = ++this.refreshEpoch;
     try {
       const current = await settingsRequest<SettingsData>("");
@@ -159,9 +164,9 @@ export class SettingsController {
       this.update({ result: "Applied. Changes apply to later turns." });
     } catch (error) {
       this.update({ error: message(error) });
-      await this.refresh();
     } finally {
       this.update({ pending: "" });
+      await this.refresh();
     }
   }
 

@@ -6,7 +6,7 @@ import { Messages } from "./components/Messages.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { Waiting } from "./components/Waiting.tsx";
 import { SettingsPanel } from "./components/Settings.tsx";
-import { SettingsController } from "./settings.ts";
+import { chatModelLabel, SettingsController } from "./settings.ts";
 import { activeTurns, isBusy, visibleMessages } from "./state.ts";
 
 const selectedFromHash = () => {
@@ -35,6 +35,7 @@ export function App() {
   const active = activeTurns(state);
   const otherRuns = active.filter((run) => run.conversationId !== id);
   const indicator = settingsState.indicator;
+  const modelLabel = chatModelLabel(settingsState.current);
 
   useEffect(() => {
     settings.start();
@@ -222,6 +223,7 @@ export function App() {
                 )}
                 <Composer
                   key={id}
+                  modelLabel={modelLabel}
                   draft={state.drafts[id] ?? ""}
                   attachments={state.attachments[id] ?? []}
                   imageLoading={!!state.imageLoading[id]}
@@ -268,12 +270,7 @@ export function App() {
                   <span aria-hidden="true">↗</span>
                 </button>
                 <div className="welcome-caption">
-                  OpenClaw agent <span aria-hidden="true">·</span>{" "}
-                  {settingsState.current?.models.find(
-                    (model) => model.id === settingsState.current?.chatModel,
-                  )?.name ??
-                    settingsState.current?.chatModel ??
-                    "Kimi K2 Thinking"}
+                  OpenClaw agent <span aria-hidden="true">·</span> {modelLabel}
                 </div>
               </div>
               <div className="welcome-footer">

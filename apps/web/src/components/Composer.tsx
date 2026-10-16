@@ -4,6 +4,7 @@ import { imageUrl, IMAGE_TYPES } from "../images.ts";
 import type { ComposerProps } from "../types.ts";
 
 export function Composer({
+  modelLabel,
   draft,
   attachments,
   imageLoading,
@@ -106,8 +107,11 @@ export function Composer({
             >
               {imageLoading ? "Reading…" : "+ Images"}
             </button>
-            <span className="model-label">
-              <span aria-hidden="true">◈</span> Kimi K2 Thinking
+            <span
+              className="model-label"
+              title="Configured chat model. Conversation overrides and native fallbacks can take precedence."
+            >
+              <span aria-hidden="true">◈</span> {modelLabel}
             </span>
           </div>
           {canStop ? (
