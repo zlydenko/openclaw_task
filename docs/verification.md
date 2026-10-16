@@ -287,3 +287,10 @@ Keep paid active-run checks subject to the opt-in budget above. Do not force a r
 - Historical findings, conversation state, device volumes, resource limits, and the private gateway port were preserved. No message, tool event, or settings mutation was replayed.
 
 Catalog source: [OpenRouter model metadata](https://openrouter.ai/api/v1/models).
+
+## Direct Settings navigation — 2026-10-16
+
+- npm run check, all 44 Vitest checks, and npm run build passed.
+- Rebuilt only the API container that serves the frontend. The gateway stayed running.
+- Browser clicks and Enter on the profile button opened Settings directly. No profile menu was present.
+- At 390 × 844, selecting the profile button closed the mobile sidebar and opened Settings. The page had no horizontal overflow.

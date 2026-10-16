@@ -49,8 +49,8 @@ Do not change reload mode implicitly.
 
 Make the existing visible user profile component in the bottom-left corner of the sidebar clickable.
 Use it as the entry point: User profile → Settings.
-Clicking the profile component opens a profile menu with a labelled Settings action. Selecting Settings opens the Settings panel.
-Keep the current profile appearance and position. Provide a pointer cursor, keyboard activation, and visible focus for the profile button and Settings action.
+Clicking the profile component opens Settings directly. Do not add an intermediate profile menu.
+Keep the current profile appearance and position. Provide a pointer cursor, keyboard activation, a labelled action, and visible focus for the profile button.
 Keep this entry point available in the sidebar on narrow screens. Closing Settings returns to the selected conversation without losing drafts or run observation.
 Keep Settings independent of the selected conversation.
 Keep active streams and run observation mounted while Settings is open.
@@ -375,7 +375,7 @@ Use the manual checks in [verification](verification.md). For runtime changes, a
 
 | Scenario | Required result |
 | --- | --- |
-| Open Settings from profile | The existing bottom-left profile component opens a menu with Settings. Pointer and keyboard activation open the Settings panel in both themes and on narrow screens without interrupting conversations. |
+| Open Settings from profile | The existing bottom-left profile component opens Settings directly. Pointer and keyboard activation open the panel in both themes and on narrow screens without interrupting conversations. |
 | Read settings | Show saved choices and restrictions. No secret or paid request. |
 | Top-right gateway indicator | Show Updating settings…, confirmed Reloading agent…, and Reconnecting… / Recovering… as applicable. Restore green Connected only after application confirmation, authenticated readiness, and recovery; retain a useful failure or unconfirmed state otherwise. |
 | Review workspace files | Show exact saved USER.md and MEMORY.md without exposing arbitrary files or private host paths. Dirty drafts survive navigation and refresh polling. |

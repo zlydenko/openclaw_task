@@ -914,13 +914,6 @@ button {
   text-align: left;
   cursor: pointer;
 }
-.profile-menu {
-  padding: 6px 0;
-}
-.profile-menu button {
-  width: 100%;
-  text-align: left;
-}
 .settings-panel {
   flex: 1;
   min-height: 0;

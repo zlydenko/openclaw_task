@@ -95,7 +95,7 @@ The user-requested WSL memory cap remains 2 GB.
 
 ## Settings
 
-Open the bottom-left **Local workspace** profile menu and select **Settings**.
+Select the bottom-left **Local workspace** profile button to open **Settings** directly.
 The panel has model selectors, individual tool switches, and separate USER.md and MEMORY.md editors.
 Review the saved values and draft before each explicit Apply or Save action.
 Drafts stay in memory during navigation. A page refresh discards them.

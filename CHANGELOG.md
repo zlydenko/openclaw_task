@@ -3,6 +3,11 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Direct Settings navigation — 2026-10-16
+
+- Open Settings directly when the owner selects the sidebar profile button. Remove the intermediate menu.
+- Keep pointer and keyboard activation, profile appearance, and focus restoration.
+
 ## Settings UI — 2026-10-16
 
 - Add profile-menu Settings with model selectors, exact tool toggles, and separate USER.md and MEMORY.md editors.

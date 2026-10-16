@@ -118,7 +118,7 @@ See [the pinned official attachment builder](https://github.com/openclaw/opencla
 
 ## Settings
 
-The profile menu opens Settings without unmounting chat observation.
+The profile button opens Settings directly without unmounting chat observation.
 A separate browser controller retains config and file drafts in memory. Only the theme is stored locally.
 Hono exposes a safe settings projection and two exact workspace filenames.
 Config writes use native config.patch with baseHash and explicit tools.deny replacement intent.

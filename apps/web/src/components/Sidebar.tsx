@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { isBusy } from "../state.ts";
 import type { SidebarProps } from "../types.ts";
@@ -16,12 +16,6 @@ export function Sidebar({
   openSettings,
 }: SidebarProps) {
   const panel = useRef<HTMLElement>(null);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profile = useRef<HTMLButtonElement>(null);
-  const settingsAction = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (profileOpen) settingsAction.current?.focus();
-  }, [profileOpen]);
 
   useEffect(() => {
     if (mobile && open)
@@ -98,37 +92,10 @@ export function Sidebar({
           )}
         </nav>
         <div className="sidebar-footer">
-          {profileOpen && (
-            <div
-              className="profile-menu"
-              role="menu"
-              aria-label="User profile"
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.stopPropagation();
-                  setProfileOpen(false);
-                  profile.current?.focus();
-                }
-              }}
-            >
-              <button
-                ref={settingsAction}
-                role="menuitem"
-                onClick={() => {
-                  setProfileOpen(false);
-                  openSettings();
-                }}
-              >
-                Settings
-              </button>
-            </div>
-          )}
           <button
-            ref={profile}
             className="workspace-label profile-button"
-            aria-haspopup="menu"
-            aria-expanded={profileOpen}
-            onClick={() => setProfileOpen(!profileOpen)}
+            aria-label="Open Settings for Local workspace"
+            onClick={openSettings}
           >
             <span className="workspace-avatar" aria-hidden="true">
               A
