@@ -564,3 +564,170 @@ Evidence:
 - Native browser CLI results and the inspected pinned navigation-guard.ts, server-context.tab-ops.ts, and routes/agent.snapshot.ts files.
 - Temporary offline proxy tests and direct Chromium/CDP checks from 2026-10-16. The prototype code and test containers were removed.
 - [Official browser control risk guidance](https://docs.openclaw.ai/gateway/security/browser-control).
+
+
+## F12 File lookup used a wrong user path and stopped before reading daily memory
+
+Finding date: 2026-10-16.
+Conversation: a6a0d660-611e-4c6f-83c7-ddcc4802179f.
+Gateway release: OpenClaw 2026.10.3.
+Model route: OpenRouter, moonshotai/kimi-k2-thinking, openai-responses.
+
+### Observed sequence
+
+The request asked for the agent's current saved memories.
+One assistant response requested four tools before receiving any tool results:
+
+1. List /home/node/.openclaw/workspace.
+2. List /home/node/.openclaw/workspace/memory.
+3. Read /home/node/.openclaw/workspace/MEMORY.md.
+4. Read /home/node/.openclaws/workspace/USER.md.
+
+Both listings succeeded. The workspace listing contained USER.md and memory/.
+The memory directory listing contained 2026-10-15.md.
+MEMORY.md was absent. The USER.md read used an extra s in .openclaws and returned file not found.
+The next assistant response ended with stopReason: error and no visible answer.
+Its error was: Responses stream changed tool-call function name from read to functions_read.
+The gateway logged the read failures at 08:31:14 UTC and the transport failure at 08:31:15 UTC.
+
+### Why the user path was wrong
+
+The incorrect absolute path is already present in the saved assistant tool-call arguments.
+The read tool received that same literal path, as shown by its raw_params log.
+The configured workspace is /home/node/.openclaw/workspace, without the extra s.
+Three sibling tool calls in the same response used the correct workspace prefix.
+The agent therefore had the correct prefix available but supplied an inconsistent path for one read.
+It also issued the reads before it could use the directory listings to verify the targets.
+
+This is consistent with a generated tool-argument typo. That attribution is an inference.
+The saved transcript and tool log establish the bad argument and its execution, but do not isolate whether the model or provider-side conversion introduced it.
+The evidence inspected for this review does not include a raw provider stream to establish that deeper cause.
+The read operation used the supplied path and returned an error; it did not correct the spelling.
+This evidence does not support a wrong workspace setting or a file-permission failure.
+
+### Why existing daily memory was not compiled
+
+The agent did check the memory directory. The missing step was reading its discovered files.
+The initial tool batch guessed the conventional MEMORY.md path while also discovering daily notes.
+A directory listing returns names, not file contents. It cannot supply the text needed for a memory summary.
+The assistant needed a later model step to consume the listing and request memory/2026-10-15.md.
+The continuation instead failed with the streamed tool-name consistency error.
+No read of the daily file, memory_search call, memory_get call, or final summary was saved for this run.
+The transcript does not show a completed decision to ignore the daily notes.
+It shows discovery followed by a failed continuation.
+
+MEMORY.md is an optional curated layer. Its absence does not mean the daily notes are empty or unavailable.
+The workspace guidance distinguishes USER.md, daily notes, and curated MEMORY.md.
+It does not require creating a unified file before existing daily notes can be read.
+The absence of MEMORY.md explains one recoverable tool error. It does not explain or justify failure of the whole request.
+The transport error prevented native correction of the bad path and further reads.
+This repeats the streamed tool-name failure class recorded in F02.
+The logs do not isolate which component of the model/provider/Responses integration changed the tool name.
+
+### Expected behavior and limits
+
+Use the configured workspace path consistently. Use successful discovery results to select existing files.
+For a request to show saved memories, read the available permitted memory files and summarize their contents.
+Report an absent curated MEMORY.md separately. Do not treat it as proof that no memory exists.
+A missing-file result should allow a corrected read or an accurate partial answer through native agent recovery.
+Do not replay tool events or message POST requests from the backend or browser to force recovery.
+
+Read-only checks as gateway UID 1000 successfully read the correct USER.md and memory/2026-10-15.md.
+Both files had mode 0600 and owner UID 1000. Their sizes were 1183 and 104 bytes.
+Those checks establish filesystem readability. They do not prove successful model-driven recovery.
+No runtime setting, memory file, conversation, or device identity was changed.
+No paid model request was made. This finding records an unresolved behavior failure, not a verified fix.
+
+Evidence:
+
+- Native saved transcript for session 4517062f-e2d5-44d6-b77f-de6b97bf7ac5, events 4 through 10.
+- Gateway logs for run 724aed88-0cc2-4bc5-a05f-612391119f2d at 2026-10-16 08:31:14-08:31:16 UTC.
+- Saved agents.entries.main.workspace and the workspace AGENTS.md memory guidance.
+- Read-only file checks inside the running gateway as its normal user.
+- [Official workspace file and optional memory guidance](https://docs.openclaw.ai/concepts/agent-workspace).
+
+
+## F13 Responses rejects inconsistent streamed and completed tool names
+
+Finding date: 2026-10-16. Follow-up to F02 and F12.
+Verified installed package: @openclaw/ai 2026.10.3.
+
+### Confirmed mechanism
+
+The Responses parser stores the function name from response.output_item.added.
+It compares that name with the completed function-call name before accepting the call.
+resolveCompletedResponsesToolCall trims both names and requires exact equality when both are present.
+The observed read and functions_read names fail that comparison.
+The parser rejects the call, then propagates the error at response completion.
+The agent turn ends before another tool result or final answer can be produced.
+
+An offline check used the installed validation function with synthetic calls.
+read followed by read succeeded. read followed by functions_read reproduced the exact logged error.
+No provider request or tool execution was involved in this check.
+The check proves the rejection mechanism, not the origin of the inconsistent upstream names.
+
+Kimi's published native tool-call ID format includes functions.<name>:<index>.
+The functions_ prefix in the failed name is consistent with a namespace conversion problem.
+That explanation remains an inference. A raw provider event trace is needed to isolate the faulty model-serving parser, OpenRouter conversion, or event correlation.
+The saved error alone cannot assign the defect to one of those components.
+
+### Fix options and trade-offs
+
+The pinned native OpenRouter guide uses openai-completions-style transport.
+Using that transport for Kimi is a candidate workaround for this Responses-specific check.
+It is not yet a verified tool-reliability fix. F01 records delayed visible text on the earlier Chat Completions route.
+A switch must verify the complete tool loop and visible answer streaming before it can satisfy both application requirements.
+
+To retain Responses, the provider or adapter must supply one consistent canonical tool name across all events for a call.
+Any compatibility correction must resolve names against the exact tools advertised in that request and reject ambiguous aliases or actual tool changes.
+Removing the consistency check or blindly stripping functions_ from arbitrary names is not a verified correction.
+No verified upstream release fix or configuration-only alias setting was established in this review.
+
+A bounded opt-in live check must cover a file read, its result, and the final answer, plus visible streaming.
+Changing transport also requires checking retained context. Account for separate native naming requests in the paid budget.
+Do not replay accepted messages or tool events. Keep recovery inside OpenClaw.
+No transport setting or upstream code was changed. No paid model call was made.
+
+Sources:
+
+- Installed /app/node_modules/@openclaw/ai/dist/openai-responses-shared-CKNmC3vC.mjs, resolveCompletedResponsesToolCall and processResponsesStream.
+- Pinned image /app/docs/providers/openrouter.md and the historical live results in F01.
+- [Upstream Responses name-consistency check](https://github.com/openclaw/openclaw/blob/main/packages/ai/src/transports/openai-responses-stream-terminal-internal.ts).
+- [Moonshot Kimi K2 native tool-call format](https://github.com/MoonshotAI/Kimi-K2/blob/main/docs/tool_call_guidance.md#manually-parsing-tool-calls).
+
+
+## F14 A model or serving-provider switch can avoid the tool-name failure but needs verification
+
+Decision and evidence review date: 2026-10-16. Follow-up to F12 and F13.
+
+The observed failure belongs to the current integration: Kimi K2 Thinking, its upstream serving provider, OpenRouter Responses, and the OpenClaw parser.
+The read versus functions_read mismatch does not prove that the Kimi model itself is defective.
+The component that introduced the inconsistent names remains unidentified.
+
+A different model or a different provider serving Kimi can potentially avoid this conversion failure.
+Moonshot reports differences in Kimi tool-call reliability between serving implementations and providers.
+That supports testing another route. It does not prove that a specific replacement fixes this installation.
+No replacement model or provider has been tested for this finding.
+
+The user requires each visible answer fragment to reach the browser as soon as the provider emits it, subject to normal transport and rendering delay.
+Holding generated answer text until completion is not acceptable.
+Splitting a completed answer into artificial chunks does not satisfy this requirement.
+F01 records buffering in the earlier Chat Completions route. Switching back alone is not an accepted fix.
+Keep the working Responses streaming behavior while investigating the name-conversion fault, unless an alternative proves both tool use and immediate visible streaming.
+
+Before adopting a replacement, verify these outcomes together:
+
+1. The agent requests the correct file and the native tool reads it successfully.
+2. The agent uses the result and completes its answer without a tool-name mismatch.
+3. Visible answer fragments arrive during generation, without application buffering until completion.
+4. Retained conversation context still works after any transport change.
+
+A single successful request is evidence for that route, not a guarantee that all future tool calls succeed.
+The wrong USER.md path in F12 is a separate tool-argument error. A model switch cannot guarantee correct paths on every call.
+Keep normal missing-file handling and native recovery. Do not compensate with backend or browser replays.
+
+This entry records an unverified fix option and the user's streaming requirement.
+No model, provider, transport, or runtime setting was changed. No paid model request was made.
+Live comparisons require explicit opt-in and a small paid budget, including native naming requests.
+
+Source: [Moonshot K2 Vendor Verifier: provider differences in tool-call reliability](https://github.com/MoonshotAI/K2-Vendor-Verifier).
