@@ -268,3 +268,22 @@ They are not a record of completed checks. Use controlled backend lifecycle resp
 
 A real restart exercise must preserve volumes and device identity. It does not require a paid model request.
 Keep paid active-run checks subject to the opt-in budget above. Do not force a real restart merely to test an ordinary hot application or file save.
+
+
+## Settings implementation verification — 2026-10-16
+
+- npm run check, npm test, and npm run build passed. All 44 Vitest checks passed, including 14 new settings checks. They use the official SDK request boundary and controlled HTTP/SSE responses. No gateway probe or replacement integration harness was added.
+- Settings checks cover safe projection, missing admin access, exact tool denies, model merging, native schema lookup, stale config, three active conversations, unresolved submissions, atomic admission, and an explicit Apply after waiting. A completed turn does not apply a draft.
+- File checks cover exact filenames, empty content, independent revisions, stale writes, missing files, UTF-8 and request limits, retained drafts, and lost acknowledgements. Unknown writes are read back and never repeated automatically.
+- Lifecycle checks cover hot application, confirmed failure, native restart evidence, recovery, and an unconfirmed application. A healthy process or positive receipt without matching requested values and native active-revision evidence does not report Applied.
+- The official OpenRouter metadata API confirmed exact IDs, text/image input, tools, context limits, and supported reasoning parameters on 2026-10-16. The reviewed catalog uses chat completions and a 4096-token output cap. MiMo input was $0.14 and GLM input was $0.01926 per million tokens at that check. Catalog preparation is separate from paid model outcome verification.
+- Default and custom-CA Compose validation and Bash startup syntax passed. Both images built, and both services reached healthy state. Native saved configuration validation passed. The documented optional CA override was used for this network.
+- A disposable Linux startup check ran as the gateway user. It verified independent missing-file creation, headings, mode 0600, preserved empty content, rejection of a file symlink, and rejection of an outside workspace. The temporary directory was removed.
+- The real gateway restarted with its volumes retained. USER.md and MEMORY.md kept the same hashes, sizes, permissions, and ownership. Authenticated readiness recovered after a transient unavailable response. All 19 saved application conversations remained listed; saved history was readable. The backend reused its device identity and chat token.
+- Live HTTP checks returned 200 for health, readiness, settings, and both allowed file reads. Missing admin scope returned 403 for config and file writes. Invalid message input and an untrusted Origin returned 400. No valid message was submitted.
+- The optional scope upgrade produced a pending request for the existing Assessment Hono backend device with exactly operator.read, operator.write, and operator.admin. It was not approved automatically. The refused handshake fell back to the saved chat token. Ordinary chat stayed ready and Settings stayed read-only.
+- Browser checks covered keyboard profile-menu activation, both themes, section navigation, the mobile sidebar, a 390 × 844 layout without horizontal overflow, an unsaved memory draft across chat navigation, and explicit discard. File text stayed plain text. Reduced-motion CSS was inspected; an operating-system preference was not emulated.
+- Native successful config and file writes, and a config-triggered native restart, remain unverified against the live gateway until the owner approves admin access. Their controlled checks passed. No paid model request was made. Candidate streaming, tool outcomes, and image recognition remain subject to a separate opt-in budget.
+- Historical findings, conversation state, device volumes, resource limits, and the private gateway port were preserved. No message, tool event, or settings mutation was replayed.
+
+Catalog source: [OpenRouter model metadata](https://openrouter.ai/api/v1/models).

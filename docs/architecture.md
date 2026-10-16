@@ -74,7 +74,8 @@ Keep session and run identifiers on applicable events.
 
 Use the official OpenClaw client behind a small adapter.
 The client and protocol packages are pinned to 2026.10.3, matching the gateway.
-The backend requests only operator.read and operator.write.
+The backend pairs with operator.read and operator.write. Settings adds an optional operator.admin scope on the same device.
+A refused upgrade falls back to the saved chat token and chat scopes. Settings stays read-only until approval.
 It advertises session-scoped events, chat-only assistant text, and tool events.
 It does not advertise approval capabilities.
 Text and tool activity use separate bounded snapshots on the same HTTP/SSE response.
@@ -114,6 +115,28 @@ It uses the current scoped device token in a server-side header. Reads are bound
 OpenClaw retains all image storage. Composer and current-turn thumbnails use in-memory bytes.
 Read-only recovery never resends attachments. Unknown submissions retain their run lock.
 See [the pinned official attachment builder](https://github.com/openclaw/openclaw/blob/v2026.10.3/ui/src/pages/chat/attachment-api.ts).
+
+## Settings
+
+The profile menu opens Settings without unmounting chat observation.
+A separate browser controller retains config and file drafts in memory. Only the theme is stored locally.
+Hono exposes a safe settings projection and two exact workspace filenames.
+Config writes use native config.patch with baseHash and explicit tools.deny replacement intent.
+The model patch merges selected reviewed definitions by ID and preserves other provider settings.
+File writes use agents.files.set with expectedHash or expectedMissing and verify read-back.
+No write is retried automatically. Native active-revision evidence resolves uncertain config application.
+
+The chat service owns the shared synchronous admission gate. It serializes settings writes and chat sends.
+Pending, active, and unresolved application turns block config and file writes across tabs.
+The gate survives a browser disconnect. An unconfirmed write keeps message admission blocked.
+Native restart evidence, authenticated readiness, and recovery drive the shared gateway indicator.
+No UI action restarts containers. Other gateway clients remain under native lifecycle rules.
+
+Before gateway startup, a local module resolves the saved main-agent workspace inside gateway_state.
+It creates only missing USER.md and MEMORY.md with private permissions and headings.
+It rejects symlinks and paths outside the supported state location. Existing bytes and ownership are preserved.
+Hono has no direct gateway-volume access. No service, database, dependency, or host mount is added.
+See the [settings PRD](settings-prd.md) and [scope approval procedure](../README.md#approve-settings-access).
 
 ## State
 

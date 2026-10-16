@@ -3,6 +3,16 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Settings UI — 2026-10-16
+
+- Add profile-menu Settings with model selectors, exact tool toggles, and separate USER.md and MEMORY.md editors.
+- Keep drafts and chat observation during navigation. Show authoritative waiting and gateway lifecycle states.
+- Serialize settings writes with chat admission. Use native config and file revision guards with read-back and no automatic mutation retries.
+- Request the optional admin scope on the existing device. Retain chat access if the upgrade is refused.
+- Create only missing workspace files before gateway startup. Preserve saved files, conversations, and device identity.
+- Add settings HTTP/SDK and startup checks. Keep paid model compatibility checks separate and opt-in.
+- Refresh reviewed catalog prices from official OpenRouter metadata on 2026-10-16.
+
 ## Kimi tool-call transport recovery — 2026-10-16
 
 - Use native OpenRouter Chat Completions for Kimi. Keep reasoning enabled and exclude its text from provider responses.

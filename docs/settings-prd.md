@@ -1,6 +1,6 @@
 # OpenClaw settings UI PRD
 
-Status: draft for review. Implementation is not authorized by this document.
+Status: implementation authorized by the user's request on 2026-10-16. Source is in apps/api and apps/web.
 Design date: 2026-10-15.
 
 ## Goal and scope
@@ -195,7 +195,7 @@ If one file exists and the other is absent, preserve the existing file and creat
 If creation or access validation fails, fail startup with the filename and a safe reason. Do not claim readiness with failed initialization.
 If a file is later removed while the gateway is running, show Missing. An explicit Save can create it with expectedMissing: true; a GET must not create it.
 A later container start creates any missing file again. Existing content survives restart and container recreation while gateway_state is retained.
-This startup requirement is part of the proposed implementation; the current entrypoint only seeds openclaw.json.
+The entrypoint now runs docker/initialize-workspace.mjs after config seeding and before the gateway starts.
 
 ### Loading into agent context
 
@@ -246,12 +246,12 @@ Use a reviewed dated list. Do not change the selected model automatically when p
 | Model and OpenRouter ID | Input | Output | Selector use | Reason to include |
 | --- | --- | --- | --- | --- |
 | [Qwen3.7 Flash](https://openrouter.ai/qwen/qwen3.7-flash), qwen/qwen3.7-flash | $0.03 | $0.13 | Chat and image analysis | Lowest output price in this shortlist; advertises vision and tools. |
-| [MiMo-V2.6-Flash](https://openrouter.ai/xiaomi/mimo-v2.6-flash), xiaomi/mimo-v2.6-flash | $0.10 | $0.28 | Chat and image analysis | Low output price; current high usage; advertises vision and tools. |
+| [MiMo-V2.6-Flash](https://openrouter.ai/xiaomi/mimo-v2.6-flash), xiaomi/mimo-v2.6-flash | $0.14 | $0.28 | Chat and image analysis | Low output price; current high usage; advertises vision and tools. |
 | [DeepSeek V4.1 Flash](https://openrouter.ai/deepseek/deepseek-v4.1-flash), deepseek/deepseek-v4.1-flash | $0.036 | $0.684 | Chat and image analysis | Current usage leader; advertises vision and tools. |
-| [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash), z-ai/glm-5.3-flash | $0.01332 | $0.90 | Chat and image analysis | Current high usage; inexpensive input; advertises vision and tools. |
+| [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash), z-ai/glm-5.3-flash | $0.01926 | $0.90 | Chat and image analysis | Current high usage; inexpensive input; advertises vision and tools. |
 | [Gemini 2.5 Flash Lite](https://openrouter.ai/google/gemini-2.5-flash-lite), google/gemini-2.5-flash-lite | $0.10 | $0.40 | Image analysis initially | Existing image configuration and low-cost baseline. |
 
-The [OpenRouter usage ranking](https://openrouter.ai/rankings), with data through 2026-10-15, places DeepSeek V4.1 Flash first, GLM 5.3 Flash third, and MiMo-V2.6-Flash fourth.
+The design's [OpenRouter usage ranking](https://openrouter.ai/rankings), with data through 2026-10-15, placed DeepSeek V4.1 Flash first, GLM 5.3 Flash third, and MiMo-V2.6-Flash fourth.
 Popularity here means OpenRouter token traffic, not verified application quality.
 Qwen is the low-price alternative. Gemini is the existing baseline. Neither is labelled a top-three model.
 

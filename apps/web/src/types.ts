@@ -110,6 +110,7 @@ export type SidebarProps = {
   close: () => void;
   theme: string;
   toggleTheme: () => void;
+  openSettings: () => void;
 };
 
 export type ImagePreviewProps = { image: MessageImage };
@@ -137,3 +138,76 @@ export type ComposerProps = {
 };
 
 export type ActivityProps = { activities: ToolActivity[] };
+
+export type GatewayIndicator = { tone: "green" | "amber" | "red"; label: string; reason?: string };
+export type SettingsData = {
+  baseHash: string;
+  chatModel: string;
+  imageModel: string;
+  canEdit: boolean;
+  canApply: boolean;
+  phase: string;
+  admission: { activeTurns: number; unresolved: boolean; ready: boolean; locked: boolean };
+  gateway: GatewayIndicator & {
+    version: string;
+    reloadMode: string;
+    bind: string;
+    port: number;
+    authenticationEnabled: boolean;
+  };
+  overrides: { chatModel: string; imageModel: string; notice: string };
+  models: {
+    id: string;
+    name: string;
+    input: string[];
+    tools: boolean;
+    contextWindow: number;
+    inputPrice: number;
+    outputPrice: number;
+    priceDate: string;
+    api: string;
+    verified: string;
+  }[];
+  tools: {
+    id: string;
+    label: string;
+    description: string;
+    enabled: boolean;
+    editable: boolean;
+    reason: string;
+  }[];
+};
+export type WorkspaceFileName = "USER.md" | "MEMORY.md";
+export type WorkspaceFile = {
+  name: WorkspaceFileName;
+  content: string;
+  missing: boolean;
+  size: number;
+  hash: string | null;
+};
+export type FileEditor = {
+  saved: WorkspaceFile | null;
+  draft: string;
+  editing: boolean;
+  error: string;
+  result: string;
+  current?: WorkspaceFile;
+};
+export type SettingsState = {
+  saved: SettingsData | null;
+  current: SettingsData | null;
+  chatModel: string;
+  imageModel: string;
+  toolChanges: Record<string, boolean>;
+  files: Record<WorkspaceFileName, FileEditor>;
+  pending: string;
+  error: string;
+  result: string;
+  indicator: GatewayIndicator | null;
+};
+export type SettingsPanelProps = {
+  controller: import("./settings.ts").SettingsController;
+  state: SettingsState;
+  open: boolean;
+  close: () => void;
+};

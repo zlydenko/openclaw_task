@@ -7,6 +7,7 @@ RUN mv /home/node/.cache/ms-playwright /opt/ms-playwright \
 RUN mkdir -p /home/node/.openclaw/workspace /etc/assessment \
     && chown -R node:node /home/node/.openclaw
 COPY docker/openclaw.json /etc/assessment/openclaw.json
+COPY docker/initialize-workspace.mjs /etc/assessment/initialize-workspace.mjs
 COPY docker/gateway-entrypoint.sh /usr/local/bin/gateway-entrypoint
 USER node
 WORKDIR /app

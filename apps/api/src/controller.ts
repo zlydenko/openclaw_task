@@ -1,6 +1,7 @@
 import type { Chat } from "./chat.ts";
 import { streamReply } from "./stream.ts";
 import type { ChatController } from "./types.ts";
+import type { ApiHandler } from "./types.ts";
 
 export function createChatController(chat: Chat): ChatController {
   return {
@@ -8,8 +9,12 @@ export function createChatController(chat: Chat): ChatController {
 
     ready: (c) =>
       c.json(
-        chat.ready ? { status: "ready" } : { status: "unavailable", reason: chat.reason },
-        chat.ready ? 200 : 503,
+        {
+          status: chat.ready && !chat.settingsAdmission().locked ? "ready" : "unavailable",
+          reason: chat.reason,
+          gateway: chat.settings.indicator(),
+        },
+        chat.ready && !chat.settingsAdmission().locked ? 200 : 503,
       ),
 
     create: (c) => c.json(chat.create(), 201),
@@ -36,5 +41,17 @@ export function createChatController(chat: Chat): ChatController {
     },
 
     cancel: async (c) => c.json(await chat.cancel(c.var.conversationId, c.var.runId), 202),
+  };
+}
+
+export function createSettingsController(
+  chat: Chat,
+): Record<"read" | "apply" | "file" | "saveFile", ApiHandler> {
+  return {
+    read: async (c) => c.json(await chat.settings.read()),
+    apply: async (c) => c.json(await chat.settings.apply(c.var.settingsInput)),
+    file: async (c) => c.json(await chat.settings.file(c.var.workspaceFileName)),
+    saveFile: async (c) =>
+      c.json(await chat.settings.saveFile(c.var.workspaceFileName, c.var.workspaceFileInput)),
   };
 }

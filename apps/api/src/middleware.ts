@@ -6,6 +6,7 @@ import { ApiError } from "./errors.ts";
 import { pageFrom } from "./pagination.ts";
 import { imageAttachments, MESSAGE_BODY_LIMIT } from "./images.ts";
 import { uuid } from "./validation.ts";
+import { settingsInput, fileInput, fileName } from "./settings/validation.ts";
 import type { ApiContext, ApiEnv, JsonRecord } from "./types.ts";
 
 export function requestBoundary(origin: string, developmentOrigin?: string) {
@@ -40,7 +41,7 @@ export function requestBoundary(origin: string, developmentOrigin?: string) {
     boundary,
     cors({
       origin: [...origins],
-      allowMethods: ["GET", "POST", "OPTIONS"],
+      allowMethods: ["GET", "POST", "PATCH", "PUT", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     }),
     createMiddleware<ApiEnv>(async (c, next) =>
@@ -48,7 +49,9 @@ export function requestBoundary(origin: string, developmentOrigin?: string) {
         maxSize:
           c.req.method === "POST" && /^\/api\/conversations\/[^/]+\/messages$/.test(c.req.path)
             ? MESSAGE_BODY_LIMIT
-            : 16 * 1024,
+            : c.req.method === "PUT" && /^\/api\/settings\/files\/[^/]+$/.test(c.req.path)
+              ? 128 * 1024
+              : 16 * 1024,
         onError: () => {
           throw new ApiError(413, "BODY_LIMIT", "Request body exceeds the allowed size.");
         },
@@ -58,7 +61,7 @@ export function requestBoundary(origin: string, developmentOrigin?: string) {
 }
 
 export const jsonBody = createMiddleware<ApiEnv>(async (c, next) => {
-  if (c.req.method !== "POST") return next();
+  if (!["POST", "PATCH", "PUT"].includes(c.req.method)) return next();
 
   if (c.req.header("content-type")?.split(";")[0]?.trim().toLowerCase() !== "application/json") {
     throw new ApiError(400, "JSON_REQUIRED", "Use application/json.");
@@ -156,3 +159,18 @@ export const pagination = (scope: (c: ApiContext) => string = () => "list") =>
 
     await next();
   });
+
+export const settingsBody = createMiddleware<ApiEnv>(async (c, next) => {
+  c.set("settingsInput", settingsInput(c.var.body));
+  await next();
+});
+
+export const workspaceFileParams = createMiddleware<ApiEnv>(async (c, next) => {
+  c.set("workspaceFileName", fileName(c.req.param("name")));
+  await next();
+});
+
+export const workspaceFileBody = createMiddleware<ApiEnv>(async (c, next) => {
+  c.set("workspaceFileInput", fileInput(c.var.body));
+  await next();
+});

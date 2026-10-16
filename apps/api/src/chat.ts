@@ -4,6 +4,7 @@ import { Conversations } from "./chat/conversations.ts";
 import { recoverGateway } from "./chat/recovery.ts";
 import { RunTracker } from "./chat/runs.ts";
 import { ApiError } from "./errors.ts";
+import { Settings } from "./settings.ts";
 import type { OpenClaw } from "./openclaw.ts";
 import type { ImageAttachment, Page, Submission } from "./types.ts";
 
@@ -16,8 +17,11 @@ export class Chat {
   private reconcileTimer: ReturnType<typeof setInterval>;
   private stopped = false;
   ready = false;
+  readonly settings: Settings;
+  private settingsLocked = false;
 
   constructor(private gateway: OpenClaw) {
+    this.settings = new Settings(gateway, this);
     this.conversations = new Conversations(gateway);
     this.runs = new RunTracker(gateway, {
       idle: (id) => {
@@ -85,6 +89,38 @@ export class Chat {
     this.requireConnection();
 
     if (!this.ready) throw new ApiError(503, "GATEWAY_UNAVAILABLE", "The gateway is not ready.");
+    if (this.settingsLocked)
+      throw new ApiError(409, "SETTINGS_BUSY", "Settings application must finish before sending.");
+  }
+
+  settingsAdmission() {
+    const unresolved = [...this.runs.active.values()].some((run) => run.uncertain);
+    return {
+      activeTurns: this.runs.active.size,
+      unresolved,
+      ready: this.ready && this.gateway.authenticated,
+      locked: this.settingsLocked,
+    };
+  }
+
+  acquireSettings() {
+    if (this.runs.active.size)
+      throw new ApiError(
+        409,
+        "RUNS_ACTIVE",
+        "Wait until application turns have confirmed outcomes.",
+      );
+    this.requireReady();
+    // Shared synchronous gate: no await can admit a send between this check and reservation.
+    this.settingsLocked = true;
+  }
+
+  holdSettings() {
+    this.settingsLocked = true;
+  }
+
+  releaseSettings() {
+    this.settingsLocked = false;
   }
 
   create() {
@@ -204,8 +240,9 @@ export class Chat {
       this.conversations,
       () => this.stopped,
     )
-      .then((ready) => {
+      .then(async (ready) => {
         this.ready = ready && !this.stopped && this.gateway.authenticated;
+        if (this.ready) await this.settings.recoverNative();
       })
       .catch(() => {
         this.ready = false;

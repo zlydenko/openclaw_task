@@ -42,7 +42,7 @@ docker compose restart api
 curl http://localhost:3000/ready
 ```
 
-The result must be `{"status":"ready"}`.
+The response must contain `"status":"ready"`. It also includes the safe gateway indicator state.
 `/health` checks the HTTP process only. It can pass before pairing.
 Later starts reuse the saved device token.
 
@@ -92,6 +92,69 @@ The initial configuration sets `agents.defaults.maxConcurrent` to 3.
 It is used only when no saved configuration exists.
 Later starts preserve the saved configuration.
 The user-requested WSL memory cap remains 2 GB.
+
+## Settings
+
+Open the bottom-left **Local workspace** profile menu and select **Settings**.
+The panel has model selectors, individual tool switches, and separate USER.md and MEMORY.md editors.
+Review the saved values and draft before each explicit Apply or Save action.
+Drafts stay in memory during navigation. A page refresh discards them.
+The panel and chat share the top-right gateway status indicator.
+
+Config application and file saves wait for all application turns to have confirmed outcomes.
+The waiting loader does not mean that a draft was saved. Select Apply or Save after the wait ends.
+The backend uses one atomic admission gate across all tabs and conversations.
+This gate covers this application. The official terminal client remains subject to native OpenClaw rules.
+
+Ordinary settings use native hot application. They do not rebuild or restart a container.
+Config writes require hybrid reload mode. File saves use independent native revision guards.
+An unconfirmed application blocks new messages until native evidence resolves it or native maintenance is complete.
+Do not repeat a write to resolve an unknown outcome.
+
+Tool switches change only exact entries in tools.deny. They preserve unrelated restrictions.
+Unsupported policy layers and unavailable services remain read-only.
+The model catalog is reviewed and dated. Prices are indicative; tiered pricing and other charges can apply.
+Catalog capabilities and config validation do not prove model compatibility.
+Model changes retain existing definitions, transport settings, fallbacks, and conversation overrides.
+The output cap stays at 4096 tokens. No model request is made by opening or saving Settings.
+
+USER.md and MEMORY.md are shared main-agent workspace files.
+Each editor permits 64 KiB of UTF-8. Empty saves are permitted.
+An external edit causes a conflict. Reload the saved version for comparison; the draft is retained.
+Saved text remains subject to native prompt budgets, privacy, and memory provenance rules.
+The gateway startup step creates each missing file with its heading. It preserves existing files, including empty files.
+
+### Approve settings access
+
+Settings writes require operator.admin, a broad gateway privilege.
+Hono exposes only the reviewed settings fields and the two named workspace files.
+Initial device pairing still requests only operator.read and operator.write.
+After a saved chat token exists, an API start requests the optional admin scope on the same device.
+If that handshake is refused, the API retains its identity and chat token, then reconnects with chat scopes.
+Settings remains read-only and ordinary chat remains available.
+
+To enable settings writes, first inspect the exact pending request:
+
+```bash
+docker compose restart api
+docker compose logs api
+docker compose exec openclaw-gateway node dist/index.js devices list
+```
+
+Match the logged device ID and request ID to `Assessment Hono backend`.
+Check that it is the existing backend device and requests exactly operator.read, operator.write, and operator.admin.
+Review the broad admin privilege before approving that request. Never use `--latest`.
+
+```bash
+PAIRING_REQUEST_ID='paste-the-reviewed-scope-upgrade-request-id'
+docker compose exec openclaw-gateway node dist/index.js devices approve "$PAIRING_REQUEST_ID"
+docker compose restart api
+curl http://localhost:3000/ready
+```
+
+Reopen Settings and check that editing is available.
+Use both Compose files from the custom-CA section for these commands if required by your network.
+No application path approves a device request automatically.
 
 ## Use the backend
 
@@ -326,7 +389,8 @@ Do this only in the terminal where you need the extra trust.
 | `apps/api/src` | Controllers, middleware, chat components, types, and the gateway adapter |
 | `apps/web/src` | Chat interface, HTTP/SSE client, run recovery, themes, and integration checks |
 | `docker/openclaw.json`         | Provider, model, authentication, and agent settings                  |
-| `docker/gateway-entrypoint.sh` | Prepare private secrets and seed initial configuration               |
+| `docker/gateway-entrypoint.sh` | Prepare private secrets, seed configuration, and initialize workspace files |
+| `docker/initialize-workspace.mjs` | Create only missing USER.md and MEMORY.md inside the saved persistent workspace |
 | `scripts/setup.mjs`            | Prepare local credentials |
 | `compose.ca.yaml` | Optional custom CA mounts for build and runtime |
 
@@ -370,7 +434,7 @@ Read [requirements](docs/requirements.md) for the assessment scope and agreed to
 Read [architecture](docs/architecture.md) for the current setup and future application design.
 Read the [Hono backend PRD](docs/backend-prd.md) for the backend API and behavior.
 Read the [React frontend PRD](docs/frontend-prd.md) for the interface requirements and acceptance checks.
-Read the [OpenClaw settings UI PRD](docs/settings-prd.md) for the proposed tool toggles, model selection, USER.md and MEMORY.md editors, and reload behavior. This feature is not implemented.
+Read the [OpenClaw settings UI PRD](docs/settings-prd.md) for tool toggles, model selection, USER.md and MEMORY.md editors, and application behavior.
 Use [gateway operation](docs/gateway-operation.md) for restart and configuration notes.
 Use [verification](docs/verification.md) for manual checks and application acceptance criteria.
 Read [findings](docs/findings.md) for historical integration results and limitations.

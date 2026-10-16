@@ -19,7 +19,7 @@ export type StoredImage = { fileName: string; source?: string };
 export type ImageContent = { bytes: Uint8Array<ArrayBuffer>; mimeType: string };
 export type MessageResult = { ok: boolean; message?: unknown };
 export type Page = { limit: number; offset: number; emptyOffset: number };
-export type ApiStatus = 400 | 404 | 409 | 413 | 503;
+export type ApiStatus = 400 | 403 | 404 | 409 | 413 | 503;
 
 export type ApiEnv = {
   Variables: {
@@ -30,6 +30,9 @@ export type ApiEnv = {
     runId: string;
     imageMessageId: string;
     imageIndex: number;
+    settingsInput: SettingsInput;
+    workspaceFileInput: FileInput;
+    workspaceFileName: WorkspaceFileName;
   };
 };
 
@@ -92,6 +95,7 @@ export type SendResult = { runId: string; status?: string };
 export type GatewayDevice = {
   identity: DeviceIdentity;
   token: string;
+  scopes: string[];
   hostDeps: GatewayClientHostDeps;
 };
 
@@ -147,4 +151,48 @@ export type ProjectedMessage = {
   truncated?: boolean;
   activities?: ToolActivity[];
   images?: MessageImage[];
+};
+
+export type SettingsInput = {
+  baseHash: string;
+  chatModel?: string;
+  imageModel?: string;
+  toolChanges?: Record<string, boolean>;
+};
+export type WorkspaceFileName = "USER.md" | "MEMORY.md";
+export type FileInput = { content: string; expectedHash?: string; expectedMissing?: true };
+export type WorkspaceFile = {
+  name: WorkspaceFileName;
+  content: string;
+  missing: boolean;
+  size: number;
+  hash: string | null;
+};
+export type ConfigSnapshot = JsonRecord & {
+  config: JsonRecord;
+  hash: string;
+  valid: boolean;
+  configRevisionHash?: string;
+  appliedConfigHash?: string;
+};
+export type SettingsPhase = "idle" | "applying" | "saving" | "unconfirmed" | "failed";
+export type ModelChoice = {
+  id: string;
+  name: string;
+  input: string[];
+  tools: boolean;
+  contextWindow: number;
+  inputPrice: number;
+  outputPrice: number;
+  priceDate: string;
+  api: string;
+  verified: string;
+};
+export type SettingsTool = {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+  editable: boolean;
+  reason: string;
 };

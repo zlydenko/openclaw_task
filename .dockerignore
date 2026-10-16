@@ -4,6 +4,7 @@ docker/**
 !docker/Dockerfile
 !docker/openclaw.json
 !docker/gateway-entrypoint.sh
+!docker/initialize-workspace.mjs
 !docker/api.Dockerfile
 !package.json
 !package-lock.json

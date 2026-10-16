@@ -34,6 +34,18 @@ async function check(response: Response) {
   );
 }
 
+export async function settingsRequest<T>(path: string, method = "GET", body?: object): Promise<T> {
+  const options: RequestInit = {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    cache: "no-store",
+    signal: AbortSignal.timeout(70000),
+  };
+  if (body) options.body = JSON.stringify(body);
+  const response = await fetch("/api/settings" + path, options);
+  return (await check(response)).json();
+}
+
 async function json<T>(url: string, body?: object): Promise<T> {
   const response = await fetch(url, {
     method: body ? "POST" : "GET",

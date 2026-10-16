@@ -44,6 +44,12 @@ export function loadGatewayDevice(directory: string, bootstrapFile: string): Gat
     get token() {
       return text(saved().token) || readFileSync(bootstrapFile, "utf8").trim();
     },
+    get scopes() {
+      const scopes = saved().scopes;
+      return Array.isArray(scopes)
+        ? scopes.filter((scope): scope is string => typeof scope === "string")
+        : [];
+    },
     hostDeps: {
       signDevicePayload: (key, payload) =>
         sign(null, Buffer.from(payload), key).toString("base64url"),
