@@ -51,7 +51,11 @@ services:
     user: "1000:1000"
     read_only: true
     cap_drop: [ALL]
-    security_opt: [no-new-privileges:true]
+    # Permit Chromium sandbox namespaces. Keep all capabilities dropped.
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./docker/chromium-seccomp.json
+    shm_size: 128m
     environment:
       OPENCLAW_STATE_DIR: /home/node/.openclaw
       NODE_OPTIONS: --max-old-space-size=768
@@ -77,7 +81,7 @@ services:
       retries: 12
       start_period: 30s
     mem_limit: 1280m
-    pids_limit: 256
+    pids_limit: 512
     logging:
       driver: json-file
       options: { max-size: 10m, max-file: "2" }

@@ -509,3 +509,58 @@ No write attempt or write-permission error was recorded. The underlying cause re
 
 Evidence: saved gateway transcript, Docker logs, and the internal gateway log.
 No paid model request or runtime change was made during diagnosis.
+
+## F11 Strict browser networking limits normal public website access
+
+Finding and decision date: 2026-10-16.
+Gateway release: OpenClaw 2026.10.3, using the digest-pinned official browser image.
+
+### Observed behavior
+
+Chromium started with its namespace and seccomp sandboxes enabled.
+HTTPS navigation and snapshots worked for a public IP URL.
+The browser executable was therefore available; the remaining restriction came from the native network policy.
+
+With browser.ssrfPolicy.dangerouslyAllowPrivateNetwork set to false, a normal domain URL was rejected.
+The pinned navigation guard reports that it cannot guarantee DNS rebinding protection for hostname-based navigation.
+It requires an IP-literal URL or an explicit trusted-host exception.
+
+The local managed tab-open path also rejected a public IP URL because strict policy requires Playwright-backed redirect inspection.
+Opening about:blank, then using the native navigate command, reached https://1.1.1.1/cdn-cgi/trace.
+The saved snapshot contained the expected page marker.
+This check did not establish general public-domain browsing.
+
+### Investigated alternative
+
+A temporary experiment used a separate Chromium container with network_mode: none.
+Unix sockets carried CDP control and mandatory forward-proxy traffic.
+The Node proxy used OpenClaw's official address policy to validate all DNS answers and pin connections to those answers.
+
+Six offline checks passed for private and special-use addresses, DNS pinning and mixed answers, HTTP redirects and numeric loopback aliases, CONNECT tunnels, WebSocket upgrades, and resolution failure.
+Direct Chromium/CDP checks in credential-free containers reached a normal HTTPS domain.
+Private IPs, local and Docker service names, metadata, redirects to private targets, page fetches, and WebSockets were blocked.
+Direct TCP connections had no route. Stopping the proxy blocked further browsing.
+
+These were prototype checks. The alternative was not activated through the running OpenClaw gateway.
+No paid model request was made.
+
+### Decision and limits
+
+The alternative required setting the native dangerouslyAllowPrivateNetwork flag to true and delegating address enforcement to the isolated browser and custom proxy.
+The flag alone would permit private-network access.
+Automatic approval review rejected that persistent change because it would replace the native protection boundary.
+
+The user declined the change and asked to skip it.
+The draft proxy, extra browser service, socket transport, and related configuration were removed.
+The native managed Chromium setup and strict policy remain in place.
+No saved gateway security setting was relaxed. Conversation and device volumes were not changed.
+
+Normal public-domain browsing remains limited by this release's strict policy.
+Exact trusted-host exceptions require separate trust decisions and maintenance.
+The README records the trade-offs. No changelog entry was added for this investigation.
+
+Evidence:
+
+- Native browser CLI results and the inspected pinned navigation-guard.ts, server-context.tab-ops.ts, and routes/agent.snapshot.ts files.
+- Temporary offline proxy tests and direct Chromium/CDP checks from 2026-10-16. The prototype code and test containers were removed.
+- [Official browser control risk guidance](https://docs.openclaw.ai/gateway/security/browser-control).

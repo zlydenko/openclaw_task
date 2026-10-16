@@ -327,9 +327,37 @@ Do this only in the terminal where you need the extra trust.
 | `compose.ca.yaml` | Optional custom CA mounts for build and runtime |
 
 The model uses the Responses API for visible streaming.
-Tool definitions are supplied directly under the full tool profile.
-Existing execution and service permissions still apply.
+The full tool profile uses tool search. Code mode selects supported models automatically and uses the bundled QuickJS executor.
+Memory search and private cross-conversation recall are enabled. Keyword search uses the local index without paid embedding requests.
+Recall can make an additional model request during a user turn.
+The built-in Control UI is enabled on the private gateway port. Authentication and device checks remain enabled.
+Browser support is enabled for a headless managed profile. Chromium sandboxing and private-network request checks remain enabled.
+The pinned official browser image includes Chromium at `/usr/local/bin/chromium`.
+The gateway uses a [Chromium sandbox syscall policy](docker/README.md) and 128 MiB of private shared memory within its existing memory limit.
+For saved configurations, set browser.executablePath to /usr/local/bin/chromium through the official CLI. The local saved config has this value.
+Strict policy accepts public IP URLs. Normal domains require exact trusted exceptions.
+General public browsing remains restricted; see the [trade-offs](#browser-networking-trade-offs) and [browser check procedure](docs/gateway-operation.md#gateway-browser).
+The scheduler is enabled. Memory dreaming is disabled, and Skill Workshop creates proposals instead of applying changes automatically.
+The local gateway reconciled its system-owned background schedules before scheduler activation. No enabled jobs remain.
+Periodic heartbeats and elevated execution remain disabled. Existing execution permissions still apply.
 Provider tool-call compatibility remains an unresolved finding.
+
+## Browser networking trade-offs
+
+The current setup keeps OpenClaw's native strict network policy.
+Chromium is installed and sandboxed, but normal public-domain browsing is restricted.
+Public IP navigation worked through a blank tab followed by the native navigate command.
+
+| Option | Benefit | Trade-off |
+| --- | --- | --- |
+| Native strict policy — retained | Keeps the built-in private-address checks and a small runtime. | This release blocks most normal domains and restricts direct tab opening. |
+| Exact trusted-host exceptions — not configured | Permits selected domains. | Requires explicit trust and ongoing maintenance. It does not provide unrestricted public browsing. |
+| Isolated browser with a public-only proxy — skipped | Prototype checks allowed normal domains while blocking private targets, redirects, resources, and WebSockets. | Adds custom networking code, another service, socket lifecycle, and memory allocation. It requires delegating the native check to the proxy. |
+
+The proxy experiment passed its focused checks but was not activated in OpenClaw.
+Automatic approval review rejected the native setting change, and the user chose to skip it.
+Disabling the native check alone would permit private-network access and was not applied.
+The draft implementation was removed. See [finding F11](docs/findings.md#f11-strict-browser-networking-limits-normal-public-website-access) for the evidence and limits.
 
 Read [requirements](docs/requirements.md) for the assessment scope and agreed tools.
 Read [architecture](docs/architecture.md) for the current setup and future application design.

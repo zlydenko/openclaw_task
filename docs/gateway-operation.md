@@ -46,9 +46,46 @@ Validate the configuration after each change.
 Restart the gateway when the change requires it.
 
 The selected model uses `openai-responses`.
-The full tool profile supplies tool definitions directly.
-Existing execution permissions and disabled services still apply.
+The full tool profile uses tool search. Code mode uses automatic model selection with the bundled QuickJS executor.
+Memory uses local keyword search. Private cross-conversation recall is enabled and can add a model request during a user turn.
+Browser support and the built-in Control UI are enabled. The gateway port remains private.
+The official browser image supplies Chromium at `/usr/local/bin/chromium`.
+The [sandbox syscall policy](../docker/README.md) permits Chromium sandbox startup while the container keeps all capabilities dropped.
+The scheduler is enabled. Its system-owned background schedules were reconciled before activation; no enabled jobs remain locally.
+Memory dreaming and periodic heartbeats remain disabled. Skill Workshop proposes changes for review.
+Existing execution permissions remain in force. Elevated execution stays disabled.
 Read [findings](findings.md) before changing the provider API or claiming that tool calls work.
+
+## Gateway browser
+
+The image keeps Chromium outside the writable cache mount.
+New configurations select /usr/local/bin/chromium. For an existing saved configuration, set this path explicitly:
+
+```bash
+docker compose exec openclaw-gateway node dist/index.js config set browser.executablePath /usr/local/bin/chromium
+docker compose exec openclaw-gateway node dist/index.js config validate
+```
+
+Use the official CLI to check the browser without a model request:
+
+```bash
+docker compose exec openclaw-gateway node dist/index.js browser start
+docker compose exec openclaw-gateway node dist/index.js browser open about:blank
+docker compose exec openclaw-gateway node dist/index.js browser navigate https://1.1.1.1/cdn-cgi/trace
+docker compose exec openclaw-gateway node dist/index.js browser snapshot
+docker compose exec openclaw-gateway node dist/index.js browser stop
+```
+
+Keep browser sandboxing enabled. Browser ports remain internal.
+The pinned release requires a blank tab followed by navigate for strict redirect inspection.
+Strict policy accepts public IP URLs. Domain URLs require exact trusted names in browser.ssrfPolicy.allowedHostnames.
+Keep browser.ssrfPolicy.dangerouslyAllowPrivateNetwork false.
+
+The isolated public-only proxy alternative was investigated and skipped at the user's request.
+See the [README trade-offs](../README.md#browser-networking-trade-offs) and [finding F11](findings.md#f11-strict-browser-networking-limits-normal-public-website-access).
+
+In the local check, browser stop left Chromium child processes and did not complete.
+A gateway restart cleared them. If this occurs, first confirm that no chat run is active, then restart the gateway without deleting volumes.
 
 ## Tool recovery
 

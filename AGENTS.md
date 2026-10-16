@@ -73,9 +73,13 @@ Keep the gateway port unpublished.
 Do not mount the Docker socket or unrelated host folders.
 Do not raise the user-requested 2 GB WSL memory cap.
 
-The full agent tool profile and direct tool definitions are configured.
+The full agent tool profile and tool search are configured.
+Code mode uses automatic model selection with the bundled QuickJS executor.
+Memory, browser support, the private Control UI, and the scheduler are enabled.
+Memory uses local keyword search. Keep periodic heartbeats and memory dreaming off unless requested.
+Keep Skill Workshop in proposal mode. Do not enable stored background jobs without a request.
 Do not restore a blanket tool deny list without a user request.
-Existing execution and disabled-service settings still apply.
+Existing execution permissions still apply. Keep elevated execution disabled.
 Do not claim that configuration validation proves model tool-call compatibility.
 
 Use short, direct sentences in the requested ASD-STE100 style.

@@ -4,7 +4,7 @@
     "bind": "lan",
     "port": 18789,
     "controlUi": {
-      "enabled": false
+      "enabled": true
     },
     "auth": {
       "mode": "token",
@@ -100,32 +100,72 @@
   },
   "tools": {
     "profile": "full",
-    "toolSearch": false,
-    "codeMode": false,
+    "toolSearch": true,
+    "codeMode": {
+      "enabled": "auto",
+      "executor": "quickjs"
+    },
     "elevated": {
       "enabled": false
+    },
+    "loopDetection": {
+      "enabled": true
     }
   },
   "memory": {
     "search": {
-      "enabled": false,
-      "rememberAcrossConversations": false
+      "enabled": true,
+      "rememberAcrossConversations": true,
+      "provider": "none"
     }
   },
   "browser": {
-    "enabled": false
+    "enabled": true,
+    "headless": true,
+    "noSandbox": false,
+    "defaultProfile": "openclaw",
+    "ssrfPolicy": {
+      "dangerouslyAllowPrivateNetwork": false
+    },
+    "executablePath": "/usr/local/bin/chromium"
   },
   "plugins": {
     "allow": [
-      "openrouter"
+      "openrouter",
+      "memory-core",
+      "active-memory",
+      "browser",
+      "code-mode-quickjs"
     ],
     "entries": {
       "memory-core": {
-        "enabled": false
+        "enabled": true,
+        "config": {
+          "dreaming": {
+            "enabled": false
+          }
+        }
+      },
+      "active-memory": {
+        "enabled": true
+      },
+      "browser": {
+        "enabled": true
+      },
+      "code-mode-quickjs": {
+        "enabled": true
       }
     }
   },
   "cron": {
-    "enabled": false
+    "enabled": true,
+    "skipMissedJobs": true
+  },
+  "skills": {
+    "workshop": {
+      "autonomous": {
+        "mode": "propose"
+      }
+    }
   }
 }

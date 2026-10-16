@@ -17,7 +17,7 @@ The provider API is `openai-responses`.
 Historical checks found visible streaming with the selected model.
 Tool-call compatibility remains unresolved.
 Read [findings](findings.md) for the evidence and limits.
-The full tool profile and direct definitions do not override existing service permissions.
+The full tool profile and tool search do not override existing service permissions.
 
 ## Application
 
