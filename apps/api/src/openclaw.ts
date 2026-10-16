@@ -62,7 +62,7 @@ export class OpenClaw {
     this.mediaBase.protocol = parsed.protocol === "wss:" ? "https:" : "http:";
     this.mediaToken = () => device.token;
 
-    let requestingAdmin = device.scopes.length > 0;
+    let requestingAdmin = true;
     const makeClient = () =>
       new GatewayClient({
         url,
@@ -87,7 +87,7 @@ export class OpenClaw {
         requestTimeoutMs: 10_000,
         hostDeps: {
           ...device.hostDeps,
-          // An optional scope upgrade must not erase a working chat credential.
+          // A refused settings handshake must not erase a working chat credential.
           clearDeviceAuthToken: (params) =>
             requestingAdmin ? undefined : device.hostDeps.clearDeviceAuthToken?.(params),
         },
@@ -127,7 +127,7 @@ export class OpenClaw {
                 requestId: pairing.requestId,
               }),
             );
-          if (requestingAdmin && !this.stopped) {
+          if (requestingAdmin && device.scopes.length > 0 && !this.stopped) {
             requestingAdmin = false;
             const previous = this.client;
             void previous.stopAndWait({ timeoutMs: 2000 }).then(() => {

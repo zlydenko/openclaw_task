@@ -78,8 +78,8 @@ The backend and React interface are implemented.
 
 1. Run `npm run check` and `npm run build`.
 2. Run `docker compose config --quiet` and start the services.
-3. Before approval, check that `/health` returns 200 and `/ready` returns 503.
-4. Review and approve the exact backend device. Restart only the API. Check `/ready`.
+3. Run `npm run up`. Check that local startup provisions only its own backend identity and reports chat and Settings ready.
+4. Check `/health`, `/ready`, and editable `/api/settings`. No separate Settings approval is required.
 5. Create a conversation. Check its list and empty history.
 6. Send invalid JSON, extra fields, an invalid request ID, and excessive text. Expect 400 or 413.
 7. Send from another Origin or Host. Expect rejection.
@@ -294,3 +294,15 @@ Catalog source: [OpenRouter model metadata](https://openrouter.ai/api/v1/models)
 - Rebuilt only the API container that serves the frontend. The gateway stayed running.
 - Browser clicks and Enter on the profile button opened Settings directly. No profile menu was present.
 - At 390 × 844, selecting the profile button closed the mobile sidebar and opened Settings. The page had no horizontal overflow.
+
+
+## Default Settings access and reviewer startup — 2026-10-16
+
+- npm run check, all 53 Vitest checks, npm run build, and the startup script syntax check passed. New checks cover initial Settings scopes, token reuse, two different installation identities, unrelated devices, unexpected permission sets, lost approval acknowledgements, and recovery after an interrupted token refresh.
+- npm run up builds and starts the services, then reads the backend identity from that installation's own private volume. It provisions only that identity through the official native device CLI. There is no hard-coded device-ID list or separate reviewer Settings unlock.
+- Automatic local provisioning was explicitly approved by the owner. The current chat-only backend was upgraded through this startup command. Its identity and persistent volumes were retained. Other paired device IDs and their scopes were unchanged.
+- The running API returned canEdit=true and canApply=true with idle, ready gateway state. A live session_status toggle was confirmed Off and then restored On through native hot application. The chat and image model selections were unchanged.
+- A guarded MEMORY.md save of its existing bytes passed through the native file RPC. The returned content and hash matched the original. No file content was logged.
+- A second npm run up confirmed readiness without another approval or API restart. A separate API restart retained Settings access with the saved token. Native config validation, both Compose configurations, and service health passed.
+- Browser checks showed enabled chat and image model selectors with no access-warning banner. Default access for differing fresh reviewer identities was checked with controlled CLI responses; no second live gateway or extra state volume was created.
+- No paid model request was made. Tool policy and file storage checks do not establish model tool-call or image-recognition compatibility. Historical findings, gateway authentication, device checks, execution permissions, the private gateway port, and resource limits were preserved.

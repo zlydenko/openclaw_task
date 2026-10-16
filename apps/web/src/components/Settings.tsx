@@ -92,8 +92,7 @@ export function SettingsPanel({ controller, state, open, close }: SettingsPanelP
         <>
           {!data.canEdit && (
             <p className="notice-banner">
-              Read-only. Approve the backend device scope upgrade through the documented setup
-              procedure. Chat remains available.
+              Settings access is unavailable. Check the local service setup.
             </p>
           )}
           {data.gateway.reloadMode !== "hybrid" && (

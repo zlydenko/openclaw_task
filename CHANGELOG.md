@@ -3,6 +3,14 @@
 Release, finding, and decision dates follow the project commit timeline.
 Test, log, and pricing dates remain as recorded.
 
+## Default Settings access — 2026-10-16
+
+- Include Settings access in normal backend pairing. Reuse the same identity and approved token across starts.
+- Add npm run up to provision each installation's own generated backend identity through the official CLI. No device IDs are hard-coded.
+- Reuse approved identities and tokens. Keep unrelated devices untouched, and reconcile lost approval acknowledgements without retrying the write.
+- Remove the separate Settings unlock notice and procedure.
+- Keep authentication, device checks, narrow HTTP routes, and execution permissions.
+
 ## Direct Settings navigation — 2026-10-16
 
 - Open Settings directly when the owner selects the sidebar profile button. Remove the intermediate menu.

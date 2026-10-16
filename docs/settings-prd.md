@@ -345,13 +345,16 @@ Read-only polling can refresh status. It must not repeat PATCH.
 After a backend restart, re-read native config and complete normal run recovery before admission returns. Never replay a pending write.
 If the installed protocol cannot prove a saved revision is active, retain uncertainty and provide native maintenance guidance.
 
-The current backend requests operator.read and operator.write.
+The backend requests operator.read, operator.write, and operator.admin during normal initial pairing.
+Settings must be available by default after normal local startup. Do not add a separate Settings approval step.
 Config and agents.files.set writes require operator.admin; config, file, and schema reads use operator.read.
-Add admin to the same persistent backend device only when this feature is implemented and document the exact scope-upgrade approval procedure.
-Do not silently approve that device request or request unrelated pairing or approval scopes.
-Until the upgrade is approved, show read-only settings and leave ordinary chat usable.
-If an admin-scope handshake is refused, retain the identity and existing token and reconnect with the previously approved chat scopes.
-Do not leave chat unavailable because an optional settings scope is missing.
+Keep the same persistent device identity and saved token across starts.
+Local startup reads the identity created in that installation's private backend volume and provisions it with the official CLI.
+Verify the exact identity, backend client metadata, and the three specified scopes before native approval.
+Use the same startup path for a fresh reviewer installation and an existing chat-only backend. Do not hard-code device IDs.
+Do not approve unrelated devices, broaden other clients, or disable authentication or device checks.
+If settings access is refused or revoked, retain the identity and existing token and reconnect with the previously approved chat scopes.
+Do not leave chat unavailable because settings access was revoked.
 See the [pinned method permission table](https://github.com/openclaw/openclaw/blob/v2026.10.3/src/gateway/methods/core-descriptors.ts).
 
 Admin is a broad gateway privilege. Expose only the narrow settings projection, patch builder, and two allowed workspace-file operations through Hono.
@@ -397,7 +400,7 @@ Use the manual checks in [verification](verification.md). For runtime changes, a
 | Native vision versus analysis tool | Explain the route and use the appropriate configured slot without custom replay or image orchestration. |
 | Lost apply response or saved-but-unapplied config | Read and reconcile. Keep uncertainty explicit. Never repeat the mutation automatically. |
 | Gateway or API restart | Preserve history, images, device identities, and known outcomes. Complete native recovery before new submissions. |
-| Missing admin scope | Settings remains read-only. Chat continues with its existing scopes. |
+| Backend setup and later starts | Normal local startup provisions its own backend with Settings access. Reviewers use their own generated identity. Later starts reuse that access without a separate unlock or fixed device-ID list. |
 
 Paid checks require a separate opt-in budget and a fixed small request count.
 Use a short streamed answer, one harmless tool outcome, and one image question to assess a candidate when authorized.

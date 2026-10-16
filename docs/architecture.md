@@ -74,8 +74,11 @@ Keep session and run identifiers on applicable events.
 
 Use the official OpenClaw client behind a small adapter.
 The client and protocol packages are pinned to 2026.10.3, matching the gateway.
-The backend pairs with operator.read and operator.write. Settings adds an optional operator.admin scope on the same device.
-A refused upgrade falls back to the saved chat token and chat scopes. Settings stays read-only until approval.
+The host startup command reads the backend identity created in this installation's private volume.
+It uses the official CLI to provision exactly that backend with operator.read, operator.write, and operator.admin.
+Fresh reviewer installations generate their own identity. No device IDs are hard-coded.
+Settings is available by default after local startup. Later starts reuse the approved token.
+If settings access is revoked, the backend preserves the saved identity and chat access.
 It advertises session-scoped events, chat-only assistant text, and tool events.
 It does not advertise approval capabilities.
 Text and tool activity use separate bounded snapshots on the same HTTP/SSE response.
@@ -136,7 +139,7 @@ Before gateway startup, a local module resolves the saved main-agent workspace i
 It creates only missing USER.md and MEMORY.md with private permissions and headings.
 It rejects symlinks and paths outside the supported state location. Existing bytes and ownership are preserved.
 Hono has no direct gateway-volume access. No service, database, dependency, or host mount is added.
-See the [settings PRD](settings-prd.md) and [scope approval procedure](../README.md#approve-settings-access).
+See the [settings PRD](settings-prd.md) and [backend access](../README.md#backend-access).
 
 ## State
 

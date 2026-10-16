@@ -605,7 +605,7 @@ it("retains the gate after an unconfirmed file save and reconciles by reading wi
   expect(f.count("agents.files.set")).toBe(1);
 });
 
-it("requests the optional admin scope on the same device and falls back to its saved chat token after refusal", async () => {
+it("requests settings access on an existing device and preserves chat if access is refused", async () => {
   const scopes = ["operator.read", "operator.write"];
   const f = await fixture(scopes);
   const identity = await readFile(join(f.directory, "identity.json"), "utf8");
@@ -637,4 +637,39 @@ it("requests the optional admin scope on the same device and falls back to its s
   });
   expect(f.gateway.settingsAdmin).toBe(false);
   await vi.waitFor(async () => expect((await f.http("/ready")).status).toBe(200));
+});
+
+it("includes settings access in first pairing without creating a separate chat-only request", async () => {
+  const f = await fixture();
+  const attempts: string[][] = [];
+  vi.spyOn(GatewayClient.prototype, "start").mockImplementation(function (this: GatewayClient) {
+    const options = Reflect.get(this, "opts");
+    attempts.push(options.scopes);
+    options.onConnectError(
+      new GatewayClientRequestError({ code: "INVALID_REQUEST", message: "Pairing required" }),
+    );
+  });
+  vi.spyOn(GatewayClient.prototype, "stopAndWait").mockResolvedValue(undefined);
+  f.gateway.start();
+  await Promise.resolve();
+  expect(attempts).toEqual([["operator.read", "operator.write", "operator.admin"]]);
+  expect(await readFile(join(f.directory, "identity.json"), "utf8")).toContain("deviceId");
+});
+
+it("reuses the approved device token with settings enabled on later starts", async () => {
+  const scopes = ["operator.read", "operator.write", "operator.admin"];
+  const f = await fixture(scopes);
+  const connections: { scopes: string[]; token: string }[] = [];
+  vi.spyOn(GatewayClient.prototype, "start").mockImplementation(function (this: GatewayClient) {
+    const options = Reflect.get(this, "opts");
+    connections.push({ scopes: options.scopes, token: options.token });
+    options.onHelloOk({ server: { version: "2026.10.3" }, auth: { scopes } });
+  });
+  vi.spyOn(GatewayClient.prototype, "stopAndWait").mockResolvedValue(undefined);
+  f.gateway.start();
+  await vi.waitFor(async () => expect((await f.http("/ready")).status).toBe(200));
+  expect(connections).toEqual([{ scopes, token: "saved-chat-token" }]);
+  const settings = await (await f.http("/api/settings")).json();
+  expect(settings.canEdit).toBe(true);
+  expect(settings.canApply).toBe(true);
 });

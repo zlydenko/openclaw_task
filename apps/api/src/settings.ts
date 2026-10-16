@@ -60,7 +60,7 @@ export class Settings {
       throw new ApiError(
         403,
         "SETTINGS_PERMISSION",
-        "Approve the backend device scope upgrade to edit settings. Chat remains available.",
+        "Settings access is unavailable for this backend device.",
       );
   }
 

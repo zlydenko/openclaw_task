@@ -17,40 +17,24 @@ Use Bash for the commands below.
 node scripts/setup.mjs
 ```
 
-3. Build and start both services:
+3. Build, start, and provision the local backend:
 
 ```bash
-docker compose up -d --build --wait --wait-timeout 90
+npm run up
 ```
 
-4. Pair the backend on its first start:
+Startup reads the backend identity created in this installation's private volume.
+It pairs that backend through the official OpenClaw CLI with chat and Settings access.
+It does not use a fixed device ID or approve unrelated devices.
+A reviewer runs the same command with their own state. No separate Settings approval is needed.
+Later starts reuse the saved identity and token.
+The command confirms authenticated readiness before reporting success.
 
-```bash
-docker compose logs api
-docker compose exec openclaw-gateway node dist/index.js devices list
-```
-
-Find the pending device named `Assessment Hono backend`.
-Compare its device ID with the backend log.
-Check that it requests only `operator.read` and `operator.write`.
-Approve that exact request. Do not approve another device or use `--latest`.
-
-```bash
-PAIRING_REQUEST_ID='paste-the-reviewed-request-id'
-docker compose exec openclaw-gateway node dist/index.js devices approve "$PAIRING_REQUEST_ID"
-docker compose restart api
-curl http://localhost:3000/ready
-```
-
-The response must contain `"status":"ready"`. It also includes the safe gateway indicator state.
-`/health` checks the HTTP process only. It can pass before pairing.
-Later starts reuse the saved device token.
-
-5. Open [the chat interface](http://localhost:3000).
+4. Open [the chat interface](http://localhost:3000).
 Create a conversation or select one from the sidebar.
 Use the appearance switch to select the light theme.
 
-6. Open the optional official terminal client:
+5. Open the optional official terminal client:
 
 ```bash
 docker compose exec openclaw-gateway node dist/index.js tui
@@ -124,37 +108,22 @@ An external edit causes a conflict. Reload the saved version for comparison; the
 Saved text remains subject to native prompt budgets, privacy, and memory provenance rules.
 The gateway startup step creates each missing file with its heading. It preserves existing files, including empty files.
 
-### Approve settings access
+### Backend access
 
-Settings writes require operator.admin, a broad gateway privilege.
+Settings is included in normal local startup. No separate Settings unlock is required.
+`npm run up` uses the identity created by the API in its own private volume.
+It requests exactly operator.read, operator.write, and operator.admin through native pairing.
+It verifies that exact identity, backend client metadata, and scope set before approving the request.
+The script has no hard-coded device IDs. It cannot approve other clients by name alone or use `--latest`.
+An existing chat-only backend is migrated through the same startup path.
+An already paired backend is reused without another approval or an extra API restart.
+
+OpenClaw requires operator.admin for config and workspace-file writes.
 Hono exposes only the reviewed settings fields and the two named workspace files.
-Initial device pairing still requests only operator.read and operator.write.
-After a saved chat token exists, an API start requests the optional admin scope on the same device.
-If that handshake is refused, the API retains its identity and chat token, then reconnects with chat scopes.
-Settings remains read-only and ordinary chat remains available.
-
-To enable settings writes, first inspect the exact pending request:
-
-```bash
-docker compose restart api
-docker compose logs api
-docker compose exec openclaw-gateway node dist/index.js devices list
-```
-
-Match the logged device ID and request ID to `Assessment Hono backend`.
-Check that it is the existing backend device and requests exactly operator.read, operator.write, and operator.admin.
-Review the broad admin privilege before approving that request. Never use `--latest`.
-
-```bash
-PAIRING_REQUEST_ID='paste-the-reviewed-scope-upgrade-request-id'
-docker compose exec openclaw-gateway node dist/index.js devices approve "$PAIRING_REQUEST_ID"
-docker compose restart api
-curl http://localhost:3000/ready
-```
-
-Reopen Settings and check that editing is available.
-Use both Compose files from the custom-CA section for these commands if required by your network.
-No application path approves a device request automatically.
+The browser never receives the device token or access to raw gateway RPC.
+Authentication, device checks, Host and Origin checks, and the private gateway port remain enabled.
+No Docker socket is mounted. Startup uses the owner's existing host Docker access.
+If an approval acknowledgement is lost, startup reads native device state and never repeats the approval automatically.
 
 ## Use the backend
 
@@ -366,7 +335,7 @@ The setup script does not export host certificates.
 ```bash
 export CUSTOM_CA_FILE=./.local/custom-ca.pem
 docker compose -f compose.yaml -f compose.ca.yaml build --no-cache api
-docker compose -f compose.yaml -f compose.ca.yaml up -d --build --wait --wait-timeout 90
+npm run up
 ```
 
 Use both `-f` arguments for later Compose commands in this environment.
@@ -392,6 +361,7 @@ Do this only in the terminal where you need the extra trust.
 | `docker/gateway-entrypoint.sh` | Prepare private secrets, seed configuration, and initialize workspace files |
 | `docker/initialize-workspace.mjs` | Create only missing USER.md and MEMORY.md inside the saved persistent workspace |
 | `scripts/setup.mjs`            | Prepare local credentials |
+| `scripts/start.mjs` | Start the services and provision this installation's backend access |
 | `compose.ca.yaml` | Optional custom CA mounts for build and runtime |
 
 The model uses native Chat Completions with `reasoning.enabled: true` and `reasoning.exclude: true` in its `params.extraBody`.
