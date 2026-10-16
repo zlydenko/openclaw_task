@@ -731,3 +731,70 @@ No model, provider, transport, or runtime setting was changed. No paid model req
 Live comparisons require explicit opt-in and a small paid budget, including native naming requests.
 
 Source: [Moonshot K2 Vendor Verifier: provider differences in tool-call reliability](https://github.com/MoonshotAI/K2-Vendor-Verifier).
+
+
+## F15 Browser discovery succeeded but the deferred tool was called directly
+
+Finding and decision date: 2026-10-16.
+Conversation: 4e17a60a-9199-4655-99b7-beebbc7f76f0.
+Gateway release: OpenClaw 2026.10.3.
+Model route: OpenRouter, moonshotai/kimi-k2-thinking, openai-responses.
+Tool Search setting: tools.toolSearch = true.
+
+### Observed sequence
+
+The user asked the agent to open Wikipedia and take a screenshot of its main page.
+
+1. The agent called tool_search with query "browser automation open website screenshot" and limit 5.
+2. Search succeeded. Its first result was the browser tool, with ID openclaw:browser:browser.
+3. The saved assistant call used the function name browser directly, with action open and targetUrl https://www.wikipedia.org.
+4. The tool result was "Tool browser not found".
+5. The assistant ended with a reply that browser automation was unavailable. No corrected tool_call was saved.
+
+The browser action did not execute. This error occurred before Chromium navigation or network-policy checks.
+The running container already had a Chromium executable. A missing browser package does not explain this failure.
+Rebuilding the same image and configuration does not correct the observed dispatch error.
+
+### Required dispatch behavior
+
+With toolSearch set to true, this release selects the structured tools mode.
+Discovered catalog tools must run through tool_call.
+The browser result ID belongs in tool_call.id. Its action and targetUrl belong in tool_call.args.
+Calling browser directly does not invoke the deferred catalog entry in this mode.
+
+The installed tool-search implementation explicitly instructs the model that deferred names are not directly callable.
+It directs calls through tool_call even when other guidance names the deferred tool directly.
+The saved call did not follow that protocol.
+The release documentation describes OpenClaw Tool Search as experimental.
+
+### Cause and evidence limits
+
+The transcript establishes the incorrect function name at the gateway execution boundary.
+It does not establish which component introduced that name.
+Copying the browser name from the search result is one possible explanation, but it remains an inference.
+The evidence reviewed does not include the exact outbound provider tool schemas and raw returned provider events.
+Those records are needed to distinguish a model selection error from provider conversion or OpenClaw adapter behavior.
+This finding does not prove that Kimi itself is defective or that tool search is universally incompatible with it.
+Configuration validation does not prove correct model tool invocation.
+
+F12 through F14 record a separate streamed tool-name mismatch.
+No common cause between that failure and this direct deferred-tool call has been established.
+F11 records a separate strict network restriction that can still block Wikipedia after dispatch is corrected.
+
+### Decision
+
+Keep tool search enabled, as requested by the user.
+Disabling tool search exposes direct tool schemas and can avoid this dispatch pattern.
+That is a workaround, not an established diagnosis or the selected correction.
+Reliable discovery, dispatch, result use, and native recovery remain unverified for this route.
+The assistant's earlier statement that browser automation was unavailable was not supported by the successful discovery result.
+
+This update records existing evidence only.
+No configuration, model, provider, transport, or runtime setting was changed.
+No paid model request or message replay was made. No changelog entry was added.
+
+Evidence:
+
+- Saved conversation history read through the official chat.history RPC and its safe application projection.
+- Installed /app/docs/tools/tool-search.md.
+- Installed /app/dist/tool-search-Bj3lDd5c.mjs, structured-mode capability-directory guidance.
